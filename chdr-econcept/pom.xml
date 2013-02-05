@@ -80,7 +80,7 @@
 	                            <artifactItem>
 	                                <groupId>gov.va.oia.terminology.converters</groupId>
 	                                <artifactId>vhat-econcept</artifactId>
-	                                <version>2012.11.13-loader-1.4</version>
+	                                <version>2012.11.13-loader-1.5</version>
 	                                <type>zip</type>
 	                            </artifactItem>
 	                        </artifactItems>

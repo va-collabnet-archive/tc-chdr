@@ -30,7 +30,6 @@ import java.util.HashSet;
 import java.util.UUID;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.dwfa.ace.refset.ConceptConstants;
 import org.dwfa.cement.ArchitectonicAuxiliary;
 import org.ihtsdo.etypes.EConcept;
 import org.ihtsdo.tk.dto.concept.component.description.TkDescription;
@@ -214,9 +213,7 @@ public class CHDRImportMojo extends AbstractMojo
 			EConcept metaDataRoot = eConceptUtil_.createConcept("CHDR Metadata", ArchitectonicAuxiliary.Concept.ARCHITECTONIC_ROOT_CONCEPT.getPrimoridalUid());
 			metaDataRoot.writeExternal(dos);
 			
-			EConcept vaRefsets = eConceptUtil_.createConcept(ConverterUUID.nameUUIDFromBytes(("gov.va.refset.VA Refsets").getBytes()), 
-			        "VA Refsets", null);
-			eConceptUtil_.addRelationship(vaRefsets, ConceptConstants.REFSET.getUuids()[0], null, null);
+			EConcept vaRefsets = eConceptUtil_.createVARefsetRootConcept();
 			vaRefsets.writeExternal(dos);
 			
 			eConceptUtil_.loadMetaDataItems(contentVersion, metaDataRoot.getPrimordialUuid(), dos);
@@ -226,13 +223,16 @@ public class CHDRImportMojo extends AbstractMojo
 			
 			HashSet<String> missingIds = new HashSet<String>();
 			
-			EConcept chdr = eConceptUtil_.createConcept("CHDR", vhatRootUUID);
+			EConcept chdr = eConceptUtil_.createConcept("CHDR Refsets", vhatRootUUID);
 			eConceptUtil_.addStringAnnotation(chdr, cdh.getRelease(), BaseContentVersion.RELEASE.getProperty().getUUID(), false);
 			eConceptUtil_.addStringAnnotation(chdr, loaderVersion, BaseContentVersion.LOADER_VERSION.getProperty().getUUID(), false);
 			//Also hang it under refsets
 			eConceptUtil_.addRelationship(chdr, vaRefsets.getPrimordialUuid(), null, null);
+			chdr.writeExternal(dos);
 			
 			//Create the CHDR refset (all VUIDs mentioned in the data files)
+			
+			EConcept chdrAllConcepts = eConceptUtil_.createConcept("All CHDR Concepts", chdr.getPrimordialUuid());
 			
 			for (VHATConcept c : cdh.getVhatConcepts().values())
 			{
@@ -247,12 +247,12 @@ public class CHDRImportMojo extends AbstractMojo
 			    {
 			        memberUUID = member.getUUID();
 			    }
-			    eConceptUtil_.addRefsetMember(chdr, memberUUID, makeRefsetUUID("CHDR", c.getId()), true, null);
+			    eConceptUtil_.addRefsetMember(chdrAllConcepts, memberUUID, makeRefsetUUID("CHDR", c.getId()), true, null);
 			}
 			
 			ConsoleUtil.println(missingIds.size() + " VUIDs exist in CHDR that do not exist in VHAT");
 			
-			chdr.writeExternal(dos);
+			chdrAllConcepts.writeExternal(dos);
 			
 			//Create the drug products refset
 			EConcept drugProducts = eConceptUtil_.createConcept("Drug Products", chdr.getPrimordialUuid());
@@ -414,7 +414,7 @@ public class CHDRImportMojo extends AbstractMojo
 			fsn = concept.getId();
 		}
 		
-		EConcept eConcept = eConceptUtil_.createConcept(makeUUID(concept), fsn, null);
+		EConcept eConcept = eConceptUtil_.createConcept(makeUUID(concept), fsn);
 		
 		eConceptUtil_.addAdditionalIds(eConcept, concept.getId(), idTypeUUID, false);
 		
@@ -447,7 +447,7 @@ public class CHDRImportMojo extends AbstractMojo
             fsn = concept.getId();
         }
         
-        EConcept eConcept = eConceptUtil_.createConcept(makeUUID(concept), fsn, null);
+        EConcept eConcept = eConceptUtil_.createConcept(makeUUID(concept), fsn);
         
         eConceptUtil_.addAdditionalIds(eConcept, concept.getId(), PT_IDs.ID.VUID.getProperty().getUUID(), false);
         

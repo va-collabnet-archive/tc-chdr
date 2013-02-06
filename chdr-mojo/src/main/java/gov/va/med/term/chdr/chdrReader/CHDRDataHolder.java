@@ -10,7 +10,7 @@ public class CHDRDataHolder
 	private HashMap<String, Concept> drugProducts = new HashMap<String, Concept>();
 	private HashMap<String, Concept> reactants = new HashMap<String, Concept>();
 	private HashMap<String, Concept> reactions = new HashMap<String, Concept>();
-	private String release;
+	private String version;
 	private int noId;
 	
 	public CHDRDataHolder(File folderContainingCSVFiles) throws Exception
@@ -36,13 +36,13 @@ public class CHDRDataHolder
 				String releaseInfo = f.getName().substring(releasePos, directionPos).trim();
 				String directionInfo = f.getName().substring(directionPos + 1, f.getName().indexOf(".csv"));
 				
-				if (release == null)
+				if (version == null)
 				{
-					release = releaseInfo;
+					version = releaseInfo;
 				}
 				else
 				{
-					if (!release.equalsIgnoreCase(releaseInfo))
+					if (!version.equalsIgnoreCase(releaseInfo))
 					{
 						throw new Exception("Release info varies!");
 					}
@@ -152,9 +152,9 @@ public class CHDRDataHolder
 		return reactions;
 	}
 
-	public String getRelease()
+	public String getVersion()
 	{
-		return release;
+		return version;
 	}
 
 	public int getNoId()

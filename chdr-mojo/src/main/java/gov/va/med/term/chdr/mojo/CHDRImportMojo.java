@@ -4,13 +4,14 @@ import gov.va.med.term.chdr.chdrReader.CHDRDataHolder;
 import gov.va.med.term.chdr.chdrReader.Concept;
 import gov.va.med.term.chdr.chdrReader.ConceptType;
 import gov.va.med.term.chdr.chdrReader.VHATConcept;
+import gov.va.med.term.chdr.propertyTypes.PT_ContentVersion;
+import gov.va.med.term.chdr.propertyTypes.PT_ContentVersion.ContentVersion;
 import gov.va.med.term.chdr.propertyTypes.PT_IDs;
 import gov.va.med.term.chdr.propertyTypes.PT_Refsets;
 import gov.va.med.term.chdr.propertyTypes.PT_Relations;
 import gov.va.med.term.chdr.propertyTypes.PT_VHAT_ID;
 import gov.va.oia.terminology.converters.sharedUtils.ConsoleUtil;
 import gov.va.oia.terminology.converters.sharedUtils.EConceptUtility;
-import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.BPT_ContentVersion;
 import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.BPT_ContentVersion.BaseContentVersion;
 import gov.va.oia.terminology.converters.sharedUtils.stats.ConverterUUID;
 import java.io.BufferedOutputStream;
@@ -46,7 +47,7 @@ public class CHDRImportMojo extends AbstractMojo
 {
     private String uuidRoot_ = "gov.va.med.term.vhat.chdr:";
     private String uuidRootVhat_ = "gov.va.med.term.vhat:";
-	private BPT_ContentVersion contentVersion = new BPT_ContentVersion(uuidRoot_);
+	private PT_ContentVersion contentVersion = new PT_ContentVersion(uuidRoot_);
 	private PT_IDs ids = new PT_IDs(uuidRoot_);
 	private PT_VHAT_ID vhatId = new PT_VHAT_ID(uuidRootVhat_);
 	private PT_Relations rels = new PT_Relations(uuidRoot_);
@@ -89,6 +90,14 @@ public class CHDRImportMojo extends AbstractMojo
 	 * @required
 	 */
 	private String loaderVersion;
+	
+    /**
+     * Content version number
+     * 
+     * @parameter expression="${project.version}"
+     * @required
+     */
+    private String releaseVersion;
 
 	public void execute() throws MojoExecutionException
 	{
@@ -224,7 +233,8 @@ public class CHDRImportMojo extends AbstractMojo
 			HashSet<String> missingIds = new HashSet<String>();
 			
 			EConcept chdr = eConceptUtil_.createConcept("CHDR Refsets", vhatRootUUID);
-			eConceptUtil_.addStringAnnotation(chdr, cdh.getRelease(), BaseContentVersion.RELEASE.getProperty().getUUID(), false);
+			eConceptUtil_.addStringAnnotation(chdr, cdh.getVersion(), ContentVersion.VERSION.getProperty().getUUID(), false);
+			eConceptUtil_.addStringAnnotation(chdr, releaseVersion, BaseContentVersion.RELEASE.getProperty().getUUID(), false);
 			eConceptUtil_.addStringAnnotation(chdr, loaderVersion, BaseContentVersion.LOADER_VERSION.getProperty().getUUID(), false);
 			//Also hang it under refsets
 			eConceptUtil_.addRelationship(chdr, vaRefsets.getPrimordialUuid(), null, null);

@@ -13,24 +13,25 @@ public class PT_IDs extends BPT_IDs
 		REACTANT_MEDIATION_CODE("Reactant Mediation Code");
 
 		private Property property;
-        private ID(String niceName)
-        {
-            // Don't know the owner yet - will be autofilled when we add this to the parent, below.
-            property = new Property(null, niceName);
-        }
 
-        public Property getProperty()
-        {
-            return property;
-        }
+		private ID(String niceName)
+		{
+			// Don't know the owner yet - will be autofilled when we add this to the parent, below.
+			property = new Property(null, niceName);
+		}
+
+		public Property getProperty()
+		{
+			return property;
+		}
 	}
 
 	public PT_IDs(String uuidRoot)
 	{
 		super(uuidRoot);
 		for (ID id : ID.values())
-        {
-            addProperty(id.getProperty());
-        }
+		{
+			addProperty(id.getProperty());
+		}
 	}
 }

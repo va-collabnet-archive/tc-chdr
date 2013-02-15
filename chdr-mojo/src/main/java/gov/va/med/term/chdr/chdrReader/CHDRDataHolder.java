@@ -11,9 +11,8 @@ public class CHDRDataHolder
 	private HashMap<String, Concept> reactants = new HashMap<String, Concept>();
 	private HashMap<String, Concept> reactions = new HashMap<String, Concept>();
 	private String version;
-	private int noId = 0;
 	
-	public CHDRDataHolder(File folderContainingCSVFiles) throws Exception
+	public CHDRDataHolder(File folderContainingDataFiles) throws Exception
 	{
 		/*
 		 * Expected File Naming Patterns: 
@@ -23,18 +22,24 @@ public class CHDRDataHolder
 		 * Reactants Release 61-Incoming.csv
 		 * Reactions Release 61-Outgoing.csv
 		 * Reactions Release 61-Incoming.csv
+		 * 
+		 * or 
+		 * 
+		 * Drug Products Release 61.xls
+		 * Reactants Release 61.xls
+		 * Reactions Release 61.xls
 		 */
 
-		for (File f : folderContainingCSVFiles.listFiles())
+		for (File f : folderContainingDataFiles.listFiles())
 		{
-			if (f.isFile() && f.getName().toLowerCase().endsWith(".csv"))
+			if (f.isFile() && (f.getName().toLowerCase().endsWith(".csv") || f.getName().toLowerCase().endsWith(".xls")))
 			{
+				ConsoleUtil.println("Processing '" + f.getName() + "'");
 				int releasePos = f.getName().indexOf("Release");
 				int directionPos = f.getName().indexOf("-");
 				
 				String name = f.getName().substring(0, releasePos).trim();
-				String releaseInfo = f.getName().substring(releasePos, directionPos).trim();
-				String directionInfo = f.getName().substring(directionPos + 1, f.getName().indexOf(".csv"));
+				String releaseInfo = f.getName().substring(releasePos, (directionPos > 0 ? directionPos : f.getName().indexOf('.'))).trim();
 				
 				if (version == null)
 				{
@@ -76,8 +81,8 @@ public class CHDRDataHolder
 					VHATConcept vhat = vhatConcepts.get(chdr.VUID);
 					if (vhat == null)
 					{
-						vhat = new VHATConcept(chdr.VUID + "", chdr.VUIDText);
-						vhatConcepts.put(vhat.getId(), vhat);
+						vhat = new VHATConcept(chdr.VUID, chdr.VUIDText);
+						vhatConcepts.put(chdr.VUID, vhat);
 					}
 					else
 					{
@@ -98,11 +103,11 @@ public class CHDRDataHolder
 						}
 						
 						//Tie the two together
-						if (directionInfo.equalsIgnoreCase("Incoming"))
+						if (chdr.direction == CHDR.DIRECTION.Incoming)
 						{
 						    vhat.addIncomingRel(other);
 						}
-						else if (directionInfo.equalsIgnoreCase("Outgoing"))
+						else if (chdr.direction == CHDR.DIRECTION.Outgoing)
 						{
 							vhat.addOutgoingRel(other);
 						}
@@ -113,7 +118,6 @@ public class CHDRDataHolder
 					}
 					else
 					{
-						noId++;
 						if (chdr.MediationText != null && chdr.MediationText.trim().length() > 0)
 						{
 							ConsoleUtil.printErrorln("text but no code?");
@@ -127,8 +131,6 @@ public class CHDRDataHolder
 		ConsoleUtil.println("Read in " + reactants.size() + " Reactant concepts");
 		ConsoleUtil.println("Read in " + reactions.size() + " Reaction concepts");
 	}
-	
-	
 
 	public HashMap<String, VHATConcept> getVhatConcepts()
 	{
@@ -154,11 +156,6 @@ public class CHDRDataHolder
 	public String getVersion()
 	{
 		return version;
-	}
-
-	public int getNoId()
-	{
-		return noId;
 	}
 
 	public static void main(String[] args) throws Exception

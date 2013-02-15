@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
@@ -8,15 +7,16 @@
 		<artifactId>chdr</artifactId>
 		<version>1.0</version>
 	</parent>
-    
+
 	<artifactId>chdr-econcept</artifactId>
 	<packaging>pom</packaging>
 	<name>chdr-econcept</name>
-    <!-- this should be set to ${sourceData.version}-loader-${project.parent.version} but that doesn't appease the maven gods that know best.... -->
-    <version>61-release-loader-1.0</version>
+	<!-- this should be set to ${sourceData.version}-loader-${project.parent.version} but that doesn't appease the maven gods that know best.... -->
+	<version>release_63-loader-1.0</version>
 
 	<properties>
-		<sourceData.version>61-release</sourceData.version>
+		<sourceData.version>release_63</sourceData.version>
+		<vhatSourceData.version>2013.02.11-loader-1.5</vhatSourceData.version>
 	</properties>
 
 	<build>
@@ -41,7 +41,7 @@
 			</plugin>
 
 			<!-- Get CHDR source file from archiva -->
-			<!--plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
 				<executions>
@@ -64,30 +64,30 @@
 						</configuration>
 					</execution>
 				</executions>
-			</plugin-->
+			</plugin>
 			<plugin>  <!-- We also need to read the VHAT data file in order to load CHDR -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
 				<executions>
 					<execution>
-	                    <id>fetch-VHAT-data</id>
-	                    <phase>generate-sources</phase>
-	                    <goals>
-	                        <goal>unpack</goal>
-	                    </goals>
-	                    <configuration>
-	                        <artifactItems>
-	                            <artifactItem>
-	                                <groupId>gov.va.oia.terminology.converters</groupId>
-	                                <artifactId>vhat-econcept</artifactId>
-	                                <version>2012.11.13-loader-1.5</version>
-	                                <type>zip</type>
-	                            </artifactItem>
-	                        </artifactItems>
-	                        <outputDirectory>${project.build.directory}/generated-resources/data/VHAT</outputDirectory>
-	                    </configuration>
-	                </execution>
-	            </executions>
+						<id>fetch-VHAT-data</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>gov.va.oia.terminology.converters</groupId>
+									<artifactId>vhat-econcept</artifactId>
+									<version>${vhatSourceData.version}</version>
+									<type>zip</type>
+								</artifactItem>
+							</artifactItems>
+							<outputDirectory>${project.build.directory}/generated-resources/data/VHAT</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 
 			<plugin>
@@ -99,11 +99,12 @@
 						<id>convert-CHDR-to-jbin</id>
 						<configuration>
 							<!-- Use this to process a local file (optionally, comment out the fetch VHAT XML data section above as well) -->
-							<inputFile>/mnt/d/Work/Apelon/Workspaces/Loaders/chdr/chdr-econcept/CHDR Data/</inputFile>
+							<!--inputFile>/mnt/d/Work/Apelon/Workspaces/Loaders/chdr/chdr-econcept/CHDR Data/</inputFile--> 
+							
+							<!-- Use this to process the xsl files that come out of the zip file found in the fetch-CHDR-data process and also the vhat econcept file. -->
+							<inputFile>${project.build.directory}/generated-resources/data</inputFile>
+							
 							<vhatInputFile>${project.build.directory}/generated-resources/data/VHAT</vhatInputFile>
-
-							<!-- Use this to process whatever CSV files that come out of the zip file found in the fetch-CHDR-data process -->
-							<!--inputFile>${project.build.directory}/generated-resources/data</inputFile-->
 						</configuration>
 						<goals>
 							<goal>convert-CHDR-data</goal>

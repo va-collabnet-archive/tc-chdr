@@ -7,20 +7,21 @@ public class PT_Relations extends BPT_Relations
 {
 	public enum MediationMapping
 	{
-		INCOMING("Incoming to VA"),
+		INCOMING("Incoming to VA"), 
 		OUTGOING("Outgoing from VA");
 
 		private Property property;
-        private MediationMapping(String niceName)
-        {
-            // Don't know the owner yet - will be autofilled when we add this to the parent, below.
-            property = new Property(null, niceName);
-        }
 
-        public Property getProperty()
-        {
-            return property;
-        }
+		private MediationMapping(String niceName)
+		{
+			// Don't know the owner yet - will be autofilled when we add this to the parent, below.
+			property = new Property(null, niceName);
+		}
+
+		public Property getProperty()
+		{
+			return property;
+		}
 	}
 
 	public PT_Relations(String uuidRoot)
@@ -28,7 +29,7 @@ public class PT_Relations extends BPT_Relations
 		super(uuidRoot);
 		for (MediationMapping mm : MediationMapping.values())
 		{
-		    addProperty(mm.getProperty());
+			addProperty(mm.getProperty());
 		}
 	}
 }

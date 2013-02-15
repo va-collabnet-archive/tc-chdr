@@ -13,9 +13,9 @@ public class Concept
 	/**
 	 * Only adds description if description is not empty
 	 */
-	public Concept(String vuid, String description, ConceptType type)
+	public Concept(String id, String description, ConceptType type)
 	{
-		id = vuid;
+		this.id = id;
 		descriptions = new HashSet<String>();
 		if (description != null && description.trim().length() > 0)
 		{

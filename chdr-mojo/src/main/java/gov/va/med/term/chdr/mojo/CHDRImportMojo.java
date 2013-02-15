@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.UUID;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -112,11 +113,6 @@ public class CHDRImportMojo extends AbstractMojo
 
 			CHDRDataHolder cdh = new CHDRDataHolder(inputFile);
 
-			if (cdh.getNoId() > 0)
-			{
-				ConsoleUtil.println("CHDR data contains " + cdh.getNoId() + " VUIDs with no associated mapping");
-			}
-			
 			ConsoleUtil.println("Reading VHAT concepts file");
 			
 			//Read in the VHAT data
@@ -240,6 +236,35 @@ public class CHDRImportMojo extends AbstractMojo
 			eConceptUtil_.addRelationship(chdr, vaRefsets.getPrimordialUuid(), null, null);
 			chdr.writeExternal(dos);
 			
+			
+			//Strip out any concepts with no mapping
+			
+			if (cdh.getNoId() > 0)
+            {
+                BufferedWriter bw = new BufferedWriter(new FileWriter(new File(outputDirectory, "VUIDs in CHDR with no mapping.tsv")));
+                bw.write("VUID\tCHDR Description" + System.getProperty("line.separator"));
+                int noMapping = 0;
+                Iterator<VHATConcept> conceptIter = cdh.getVhatConcepts().values().iterator();
+                while (conceptIter.hasNext())
+                {
+                    VHATConcept c = conceptIter.next();
+                    if (c.hasNoRels())
+                    {
+                        noMapping++;
+                        bw.write(c.getId() + "\t" + Arrays.deepToString(c.getDescriptions().toArray(new String[0])) + System.getProperty("line.separator"));
+                        conceptIter.remove();
+                    }
+                }
+    			
+                bw.close();
+                ConsoleUtil.println("CHDR concepts with no mapping: " + noMapping + " - logged to 'VUIDs in CHDR with no mapping.tsv' and ignored");
+                if (cdh.getNoId() !=  noMapping)
+                {
+                    System.err.println("Unexpected error - mismatched missing counts");
+                }
+            }
+            
+			
 			//Create the CHDR refset (all VUIDs mentioned in the data files)
 			
 			EConcept chdrAllConcepts = eConceptUtil_.createConcept("All CHDR Concepts", chdr.getPrimordialUuid());
@@ -313,6 +338,7 @@ public class CHDRImportMojo extends AbstractMojo
                 //This concept should already exist in the DB - these rels will (hopefully) just be merged onto it
                 EConcept eConcept = eConceptUtil_.createConcept((WBType.Concept == member.getType() ? member.getUUID() : member.getParentConceptUUID()), 
                         (Long)null, null);
+               
                 if (WBType.Concept == member.getType())
                 {
                     conceptMatch++;
@@ -364,18 +390,18 @@ public class CHDRImportMojo extends AbstractMojo
 			ConverterUUID.dump(new File(outputDirectory, "chdrUuidDebugMap.txt"));
 			
 			ConsoleUtil.println("Writing 'Missing Concept' file");
-			BufferedWriter br = new BufferedWriter(new FileWriter(new File(outputDirectory, "VUIDs in CHDR not in VHAT.tsv")));
-			br.write("VUID\tCHDR Description" + System.getProperty("line.separator"));
+			BufferedWriter bw = new BufferedWriter(new FileWriter(new File(outputDirectory, "VUIDs in CHDR not in VHAT.tsv")));
+			bw.write("VUID\tCHDR Description" + System.getProperty("line.separator"));
 	        for (String id : missingIds)
 	        {
 	            Concept c = cdh.getVhatConcepts().get(id);
-	            br.write(c.getId() + "\t" + Arrays.deepToString(c.getDescriptions().toArray(new String[]{})) + System.getProperty("line.separator"));
+	            bw.write(c.getId() + "\t" + Arrays.deepToString(c.getDescriptions().toArray(new String[]{})) + System.getProperty("line.separator"));
 	        }
-	        br.close();
+	        bw.close();
 	        
 	        ConsoleUtil.println("Writing 'Mismatched descriptions' file");
-            br = new BufferedWriter(new FileWriter(new File(outputDirectory, "Mismatched Descriptions.tsv")));
-            br.write("VUID\tCHDR Description\tVHAT Description" + System.getProperty("line.separator"));
+            bw = new BufferedWriter(new FileWriter(new File(outputDirectory, "Mismatched Descriptions.tsv")));
+            bw.write("VUID\tCHDR Description\tVHAT Description" + System.getProperty("line.separator"));
             for (Concept c : cdh.getVhatConcepts().values())
             {
                 if (c.getDescriptions().size() > 1)
@@ -390,12 +416,12 @@ public class CHDRImportMojo extends AbstractMojo
                         String vhatDesc = vhatVuidConceptToUUID.get(c.getId()).getDescription(); 
                         if (!desc.equals(vhatDesc))
                         {
-                            br.write(c.getId() + "\t" + desc + "\t" + vhatDesc + System.getProperty("line.separator"));
+                            bw.write(c.getId() + "\t" + desc + "\t" + vhatDesc + System.getProperty("line.separator"));
                         }
                     }
                 }
             }
-            br.close();
+            bw.close();
 		}
 		catch (Exception ex)
 		{

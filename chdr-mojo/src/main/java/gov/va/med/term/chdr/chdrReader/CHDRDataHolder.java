@@ -11,7 +11,7 @@ public class CHDRDataHolder
 	private HashMap<String, Concept> reactants = new HashMap<String, Concept>();
 	private HashMap<String, Concept> reactions = new HashMap<String, Concept>();
 	private String version;
-	private int noId;
+	private int noId = 0;
 	
 	public CHDRDataHolder(File folderContainingCSVFiles) throws Exception
 	{
@@ -70,7 +70,6 @@ public class CHDRDataHolder
 					throw new Exception("Unexpected file name");
 				}
 				
-				noId = 0;
 				
 				for (CHDR chdr : CHDRParser.readData(f))
 				{

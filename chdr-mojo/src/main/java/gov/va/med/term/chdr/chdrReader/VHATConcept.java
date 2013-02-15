@@ -39,6 +39,15 @@ public class VHATConcept extends Concept
         outgoingRels.add(c);
     }
     
+    public boolean hasNoRels()
+    {
+        if (incomingRels.size() == 0 && outgoingRels.size() == 0)
+        {
+            return true;
+        }
+        return false;
+    }
+    
     public Collection<Concept> getIncomingRels()
     {
         return incomingRels;

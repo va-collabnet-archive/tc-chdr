@@ -4,6 +4,7 @@ import gov.va.med.term.chdr.chdrReader.CHDRDataHolder;
 import gov.va.med.term.chdr.chdrReader.Concept;
 import gov.va.med.term.chdr.chdrReader.ConceptType;
 import gov.va.med.term.chdr.chdrReader.VHATConcept;
+import gov.va.med.term.chdr.propertyTypes.PT_Attributes;
 import gov.va.med.term.chdr.propertyTypes.PT_ContentVersion;
 import gov.va.med.term.chdr.propertyTypes.PT_ContentVersion.ContentVersion;
 import gov.va.med.term.chdr.propertyTypes.PT_IDs;
@@ -36,6 +37,9 @@ import org.dwfa.cement.ArchitectonicAuxiliary;
 import org.ihtsdo.etypes.EConcept;
 import org.ihtsdo.tk.dto.concept.component.description.TkDescription;
 import org.ihtsdo.tk.dto.concept.component.identifier.TkIdentifier;
+import org.ihtsdo.tk.dto.concept.component.refex.TkRefexAbstractMember;
+import org.ihtsdo.tk.dto.concept.component.refex.type_string.TkRefsetStrMember;
+import org.ihtsdo.tk.dto.concept.component.relationship.TkRelationship;
 
 /**
  * Goal which converts CHDR data into the workbench jbin format
@@ -53,10 +57,14 @@ public class CHDRImportMojo extends AbstractMojo
 	private PT_VHAT_ID vhatId = new PT_VHAT_ID(uuidRootVhat_);
 	private PT_Relations rels = new PT_Relations(uuidRoot_);
 	private PT_Refsets relRefsets = new PT_Refsets(uuidRoot_);
+	private PT_Attributes attributes = new PT_Attributes(uuidRoot_);
 	private EConceptUtility eConceptUtil_;
 	private DataOutputStream dos;
 
 	private HashMap<String, UUIDTypeRef> vhatVuidConceptToUUID = new HashMap<String, UUIDTypeRef>();
+	
+	private int dupeRelCount = 0;
+	private int dupeRelCountWithAnnotation = 0;
 
 	/**
 	 * Where to put the output file.
@@ -110,6 +118,8 @@ public class CHDRImportMojo extends AbstractMojo
 				f.mkdirs();
 			}
 
+			ConverterUUID.enableDupeUUIDException = false;
+			
 			CHDRDataHolder cdh = new CHDRDataHolder(inputFile);
 
 			ConsoleUtil.println("Reading VHAT concepts file");
@@ -136,7 +146,7 @@ public class CHDRImportMojo extends AbstractMojo
 
 			ConsoleUtil.println("Read " + vhatConcepts.size() + " concepts from the VHAT jbin file");
 
-			eConceptUtil_ = new EConceptUtility(uuidRoot_);
+			eConceptUtil_ = new EConceptUtility(uuidRoot_, "CHDR Path", dos);
 
 			UUID vhatRootUUID = null;
 
@@ -196,7 +206,7 @@ public class CHDRImportMojo extends AbstractMojo
 						}
 						if (descVuid != null)
 						{
-							vhatVuidConceptToUUID.put(descVuid, new UUIDTypeRef(descUUID, WBType.Description, d.getText(), d.getTypeUuid(), c.getPrimordialUuid()));
+							vhatVuidConceptToUUID.put(descVuid, new UUIDTypeRef(descUUID, WBType.Description, d.getText(), c.getPrimordialUuid()));
 						}
 					}
 				}
@@ -224,6 +234,7 @@ public class CHDRImportMojo extends AbstractMojo
 			eConceptUtil_.loadMetaDataItems(ids, metaDataRoot.getPrimordialUuid(), dos);
 			eConceptUtil_.loadMetaDataItems(rels, metaDataRoot.getPrimordialUuid(), dos);
 			eConceptUtil_.loadMetaDataItems(relRefsets, metaDataRoot.getPrimordialUuid(), dos);
+			eConceptUtil_.loadMetaDataItems(attributes, metaDataRoot.getPrimordialUuid(), dos);
 
 			HashSet<String> missingIds = new HashSet<String>();
 
@@ -316,6 +327,8 @@ public class CHDRImportMojo extends AbstractMojo
 
 			int conceptMatch = 0;
 			int descMatch = 0;
+			
+			HashMap<UUID, EConcept> conceptsToStore = new HashMap<>();
 
 			// Finally, create the relations between the VUID concepts and the targets
 			for (VHATConcept c : cdh.getVhatConcepts().values())
@@ -324,8 +337,13 @@ public class CHDRImportMojo extends AbstractMojo
 				UUIDTypeRef member = vhatVuidConceptToUUID.get(c.getId());
 
 				// This concept should already exist in the DB - these rels will (hopefully) just be merged onto it
-				EConcept eConcept = eConceptUtil_.createConcept((WBType.Concept == member.getType() ? member.getUUID() : member.getParentConceptUUID()),
+				EConcept eConcept = conceptsToStore.get(WBType.Concept == member.getType() ? member.getUUID() : member.getParentConceptUUID());
+				if (eConcept == null)
+				{
+					eConcept = eConceptUtil_.createConcept((WBType.Concept == member.getType() ? member.getUUID() : member.getParentConceptUUID()),
 						(Long) null, null);
+					conceptsToStore.put(eConcept.getPrimordialUuid(), eConcept);
+				}
 
 				if (WBType.Concept == member.getType())
 				{
@@ -342,28 +360,32 @@ public class CHDRImportMojo extends AbstractMojo
 				else if (WBType.Description == member.getType())
 				{
 					descMatch++;
-					ConverterUUID.addMapping("Merge to existing concept", member.getDescriptionType());
-					TkDescription description = eConceptUtil_.addDescription(eConcept, member.getUUID(), member.getDescription(), member.getDescriptionType(), false);
-					// This description already exists in the WB, just need to add stuff to it.
 					for (Concept relConcept : c.getIncomingRels())
 					{
-						eConceptUtil_.addUuidAnnotation(description, makeUUID(relConcept), PT_Refsets.Refsets.INCOMING.getProperty().getUUID());
+						//I tried to map these to the UUID of the description that had the Rel, but the WB doesn't allow refsets to descriptions, only concept.
+						//So now, I just stick the description and the VUID in as a string annotation on the rel.
+						createOrUpdateRel(eConcept, makeUUID(relConcept), PT_Refsets.Refsets.INCOMING.getProperty().getUUID(), member.getDescription() + " - " + c.getId());
 					}
 					for (Concept relConcept : c.getOutgoingRels())
 					{
-						eConceptUtil_.addUuidAnnotation(description, makeUUID(relConcept), PT_Refsets.Refsets.OUTGOING.getProperty().getUUID());
+						createOrUpdateRel(eConcept, makeUUID(relConcept), PT_Refsets.Refsets.OUTGOING.getProperty().getUUID(), member.getDescription() + " - " + c.getId());
 					}
 				}
 				else
 				{
 					throw new RuntimeException("oops");
 				}
-
+			}
+			
+			for (EConcept eConcept : conceptsToStore.values())
+			{
 				eConcept.writeExternal(dos);
 			}
 
-			ConsoleUtil.println("Mappings to descriptions: " + descMatch);
+			ConsoleUtil.println("Mappings to descriptions (moved up to concepts): " + descMatch);
 			ConsoleUtil.println("Mappings to concepts: " + conceptMatch);
+			
+			ConsoleUtil.println("Duplicate Relationships Merged: " + dupeRelCount + " and " + dupeRelCountWithAnnotation + " were complete duplicates.");
 
 			dos.flush();
 			dos.close();
@@ -410,10 +432,55 @@ public class CHDRImportMojo extends AbstractMojo
 				}
 			}
 			bw.close();
+			
+			ConsoleUtil.writeOutputToFile(new File(outputDirectory, "ConsoleOutput.txt").toPath());
 		}
 		catch (Exception ex)
 		{
 			throw new MojoExecutionException(ex.getLocalizedMessage(), ex);
+		}
+	}
+	
+	private void createOrUpdateRel(EConcept eConcept, UUID target, UUID relType, String annotationValue)
+	{
+		//Need to search through the relationships on the concept as we have it now - and if the desired rel doesn't exist - create it.
+		//If it does, see if it is annotated for this description.  If not, add the annotation.
+		TkRelationship rel = null;
+		boolean annotationFound = false;
+		if (eConcept.getRelationships() != null)
+		{
+			for (TkRelationship currentRel : eConcept.getRelationships())
+			{
+				if (currentRel.getRelationshipTargetUuid().equals(target) && currentRel.getTypeUuid().equals(relType))
+				{
+					dupeRelCount++;
+					rel = currentRel;
+					for (TkRefexAbstractMember<?> annotation : rel.getAnnotations())
+					{
+						if (annotation instanceof TkRefsetStrMember)
+						{
+							TkRefsetStrMember annot = (TkRefsetStrMember)annotation;
+							if (annot.getString1().equals(annotationValue) && annot.getRefexUuid().equals(PT_Attributes.Attributes.CHDR_REL_SOURCE.getProperty().getUUID()))
+							{
+								dupeRelCountWithAnnotation++;
+								annotationFound = true;
+								break;
+							}
+						}
+					}
+					
+					break;
+				}
+			}
+		}
+		if (rel == null)
+		{
+			rel = eConceptUtil_.addRelationship(eConcept, target, relType, null); 
+		}
+		
+		if (!annotationFound)
+		{
+			eConceptUtil_.addStringAnnotation(rel, annotationValue, PT_Attributes.Attributes.CHDR_REL_SOURCE.getProperty().getUUID(), false);
 		}
 	}
 
@@ -509,7 +576,7 @@ public class CHDRImportMojo extends AbstractMojo
 	};
 	private class UUIDTypeRef
 	{
-		private UUID uuid, parentConceptUUID, descriptionType;
+		private UUID uuid, parentConceptUUID;
 		private WBType wbType;
 		private String description;
 
@@ -520,12 +587,11 @@ public class CHDRImportMojo extends AbstractMojo
 			this.description = description;
 		}
 
-		public UUIDTypeRef(UUID uuid, WBType wbType, String description, UUID descriptionType, UUID parentConceptUUID)
+		public UUIDTypeRef(UUID uuid, WBType wbType, String description, UUID parentConceptUUID)
 		{
 			this.uuid = uuid;
 			this.wbType = wbType;
 			this.description = description;
-			this.descriptionType = descriptionType;
 			this.parentConceptUUID = parentConceptUUID;
 		}
 
@@ -547,11 +613,6 @@ public class CHDRImportMojo extends AbstractMojo
 		public UUID getParentConceptUUID()
 		{
 			return parentConceptUUID;
-		}
-
-		public UUID getDescriptionType()
-		{
-			return descriptionType;
 		}
 	}
 

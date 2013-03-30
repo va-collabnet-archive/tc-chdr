@@ -6,16 +6,16 @@ import java.util.HashMap;
 
 public class CHDRDataHolder
 {
-	private HashMap<String, VHATConcept> vhatConcepts = new HashMap<String, VHATConcept>();
-	private HashMap<String, Concept> drugProducts = new HashMap<String, Concept>();
-	private HashMap<String, Concept> reactants = new HashMap<String, Concept>();
-	private HashMap<String, Concept> reactions = new HashMap<String, Concept>();
+	private HashMap<String, VHATConcept> vhatConcepts = new HashMap<>();
+	private HashMap<String, Concept> drugProducts = new HashMap<>();
+	private HashMap<String, Concept> reactants = new HashMap<>();
+	private HashMap<String, Concept> reactions = new HashMap<>();
 	private String version;
-	
+
 	public CHDRDataHolder(File folderContainingDataFiles) throws Exception
 	{
 		/*
-		 * Expected File Naming Patterns: 
+		 * Expected File Naming Patterns:
 		 * Drug Products Release 61-Outgoing.csv
 		 * Drug Products Release 61-Incoming.csv
 		 * Reactants Release 61-Outgoing.csv
@@ -23,7 +23,7 @@ public class CHDRDataHolder
 		 * Reactions Release 61-Outgoing.csv
 		 * Reactions Release 61-Incoming.csv
 		 * 
-		 * or 
+		 * or
 		 * 
 		 * Drug Products Release 61.xls
 		 * Reactants Release 61.xls
@@ -37,10 +37,10 @@ public class CHDRDataHolder
 				ConsoleUtil.println("Processing '" + f.getName() + "'");
 				int releasePos = f.getName().indexOf("Release");
 				int directionPos = f.getName().indexOf("-");
-				
+
 				String name = f.getName().substring(0, releasePos).trim();
 				String releaseInfo = f.getName().substring(releasePos, (directionPos > 0 ? directionPos : f.getName().indexOf('.'))).trim();
-				
+
 				if (version == null)
 				{
 					version = releaseInfo;
@@ -52,7 +52,7 @@ public class CHDRDataHolder
 						throw new Exception("Release info varies!");
 					}
 				}
-				
+
 				HashMap<String, Concept> map;
 				ConceptType type;
 				if (name.equalsIgnoreCase("Drug Products"))
@@ -70,12 +70,11 @@ public class CHDRDataHolder
 					map = reactions;
 					type = ConceptType.REACTION;
 				}
-				else 
+				else
 				{
 					throw new Exception("Unexpected file name");
 				}
-				
-				
+
 				for (CHDR chdr : CHDRParser.readData(f))
 				{
 					VHATConcept vhat = vhatConcepts.get(chdr.VUID);
@@ -88,7 +87,7 @@ public class CHDRDataHolder
 					{
 						vhat.addDescription(chdr.VUIDText);
 					}
-					
+
 					if (chdr.MediationCode != null && chdr.MediationCode.trim().length() > 0)
 					{
 						Concept other = map.get(chdr.MediationCode);
@@ -101,11 +100,11 @@ public class CHDRDataHolder
 						{
 							other.addDescription(chdr.MediationText);
 						}
-						
-						//Tie the two together
+
+						// Tie the two together
 						if (chdr.direction == CHDR.DIRECTION.Incoming)
 						{
-						    vhat.addIncomingRel(other);
+							vhat.addIncomingRel(other);
 						}
 						else if (chdr.direction == CHDR.DIRECTION.Outgoing)
 						{
@@ -136,7 +135,6 @@ public class CHDRDataHolder
 	{
 		return vhatConcepts;
 	}
-
 
 	public HashMap<String, Concept> getDrugProducts()
 	{

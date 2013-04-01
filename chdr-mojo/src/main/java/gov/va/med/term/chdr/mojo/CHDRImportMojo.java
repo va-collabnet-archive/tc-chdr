@@ -118,8 +118,6 @@ public class CHDRImportMojo extends AbstractMojo
 				f.mkdirs();
 			}
 
-			ConverterUUID.enableDupeUUIDException = false;
-			
 			CHDRDataHolder cdh = new CHDRDataHolder(inputFile);
 
 			ConsoleUtil.println("Reading VHAT concepts file");

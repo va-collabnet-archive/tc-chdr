@@ -13,6 +13,7 @@ import gov.va.med.term.chdr.propertyTypes.PT_Relations;
 import gov.va.med.term.chdr.propertyTypes.PT_VHAT_ID;
 import gov.va.oia.terminology.converters.sharedUtils.ConsoleUtil;
 import gov.va.oia.terminology.converters.sharedUtils.EConceptUtility;
+import gov.va.oia.terminology.converters.sharedUtils.EConceptUtility.DescriptionType;
 import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.BPT_ContentVersion.BaseContentVersion;
 import gov.va.oia.terminology.converters.sharedUtils.stats.ConverterUUID;
 import java.io.BufferedOutputStream;
@@ -241,7 +242,7 @@ public class CHDRImportMojo extends AbstractMojo
 			eConceptUtil_.addStringAnnotation(chdr, releaseVersion, BaseContentVersion.RELEASE.getProperty().getUUID(), false);
 			eConceptUtil_.addStringAnnotation(chdr, loaderVersion, BaseContentVersion.LOADER_VERSION.getProperty().getUUID(), false);
 			// Also hang it under refsets
-			eConceptUtil_.addRelationship(chdr, vaRefsets.getPrimordialUuid(), null, null);
+			eConceptUtil_.addRelationship(chdr, vaRefsets.getPrimordialUuid());
 			chdr.writeExternal(dos);
 
 			// Strip out any concepts with no mapping
@@ -509,7 +510,7 @@ public class CHDRImportMojo extends AbstractMojo
 
 		for (String s : synonyms)
 		{
-			eConceptUtil_.addSynonym(eConcept, s, false, null);
+			eConceptUtil_.addDescription(eConcept, s, DescriptionType.SYNONYM, false, null, null, false);
 		}
 		eConcept.writeExternal(dos);
 		return eConcept.getPrimordialUuid();
@@ -542,9 +543,9 @@ public class CHDRImportMojo extends AbstractMojo
 
 		for (String s : synonyms)
 		{
-			eConceptUtil_.addSynonym(eConcept, s, false, null);
+			eConceptUtil_.addDescription(eConcept, s, DescriptionType.SYNONYM, false, null, null, false);
 		}
-		eConceptUtil_.addRelationship(eConcept, parentUUID, null, null);
+		eConceptUtil_.addRelationship(eConcept, parentUUID);
 		vhatVuidConceptToUUID.put(concept.getId(), new UUIDTypeRef(eConcept.getPrimordialUuid(), WBType.Concept, fsn));
 
 		eConcept.writeExternal(dos);

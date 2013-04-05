@@ -14,8 +14,7 @@ public class PT_ContentVersion extends BPT_ContentVersion
 		private ContentVersion(String niceName)
 		{
 			// Don't know the owner yet - will be autofilled when we add this to the parent, below.
-			property = new Property(null, this.name(), niceName);
-			property.setUseDescriptionAsFSN(true);
+			property = new Property(null, niceName);
 		}
 
 		public Property getProperty()

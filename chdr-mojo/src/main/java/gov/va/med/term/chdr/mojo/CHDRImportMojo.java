@@ -10,7 +10,6 @@ import gov.va.med.term.chdr.propertyTypes.PT_ContentVersion.ContentVersion;
 import gov.va.med.term.chdr.propertyTypes.PT_IDs;
 import gov.va.med.term.chdr.propertyTypes.PT_Refsets;
 import gov.va.med.term.chdr.propertyTypes.PT_Relations;
-import gov.va.med.term.chdr.propertyTypes.PT_VHAT_ID;
 import gov.va.oia.terminology.converters.sharedUtils.ConsoleUtil;
 import gov.va.oia.terminology.converters.sharedUtils.EConceptUtility;
 import gov.va.oia.terminology.converters.sharedUtils.EConceptUtility.DescriptionType;
@@ -51,14 +50,16 @@ import org.ihtsdo.tk.dto.concept.component.relationship.TkRelationship;
  */
 public class CHDRImportMojo extends AbstractMojo
 {
-	private String uuidRoot_ = "gov.va.med.term.vhat.chdr:";
-	private String uuidRootVhat_ = "gov.va.med.term.vhat:";
-	private PT_ContentVersion contentVersion = new PT_ContentVersion(uuidRoot_);
-	private PT_IDs ids = new PT_IDs(uuidRoot_);
-	private PT_VHAT_ID vhatId = new PT_VHAT_ID(uuidRootVhat_);
-	private PT_Relations rels = new PT_Relations(uuidRoot_);
-	private PT_Refsets relRefsets = new PT_Refsets(uuidRoot_);
-	private PT_Attributes attributes = new PT_Attributes(uuidRoot_);
+	private static final String chdrNamespaceBaseSeed = "gov.va.med.term.vhat.chdr";
+	private static final String vhatNamespaceBaseSeed = "gov.va.med.term.vhat";	
+	private UUID vhatNamespaceUUID = ConverterUUID.createNamespaceUUIDFromString(null, vhatNamespaceBaseSeed);
+	private UUID vhatIDUUIDAuthority;
+	
+	private PT_ContentVersion contentVersion;
+	private PT_IDs ids;
+	private PT_Relations rels;
+	private PT_Refsets relRefsets;
+	private PT_Attributes attributes;
 	private EConceptUtility eConceptUtil_;
 	private DataOutputStream dos;
 
@@ -107,17 +108,27 @@ public class CHDRImportMojo extends AbstractMojo
 	 * @required
 	 */
 	private String releaseVersion;
-
+	
 	public void execute() throws MojoExecutionException
 	{
-		File f = outputDirectory;
-
 		try
 		{
-			if (!f.exists())
+			if (!outputDirectory.exists())
 			{
-				f.mkdirs();
+				outputDirectory.mkdirs();
 			}
+			
+			File touch = new File(outputDirectory, "CHDREConcepts.jbin");
+			dos = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(touch)));
+			eConceptUtil_ = new EConceptUtility(chdrNamespaceBaseSeed, "CHDR Path", dos);
+			contentVersion = new PT_ContentVersion();
+			ids = new PT_IDs();
+			rels = new PT_Relations();
+			relRefsets = new PT_Refsets();
+			attributes = new PT_Attributes();
+			
+			//This is how the UUID for the VHAT ID type is created.
+			vhatIDUUIDAuthority = ConverterUUID.createNamespaceUUIDFromString(vhatNamespaceUUID, ids.getPropertyTypeDescription() + ":VUID");
 
 			CHDRDataHolder cdh = new CHDRDataHolder(inputFile);
 
@@ -145,8 +156,6 @@ public class CHDRImportMojo extends AbstractMojo
 
 			ConsoleUtil.println("Read " + vhatConcepts.size() + " concepts from the VHAT jbin file");
 
-			eConceptUtil_ = new EConceptUtility(uuidRoot_, "CHDR Path", dos);
-
 			UUID vhatRootUUID = null;
 
 			for (EConcept c : vhatConcepts)
@@ -156,7 +165,7 @@ public class CHDRImportMojo extends AbstractMojo
 				{
 					for (TkIdentifier id : c.getConceptAttributes().getAdditionalIdComponents())
 					{
-						if (id.getAuthorityUuid().equals(vhatId.getProperty("VUID").getUUID()))
+						if (id.getAuthorityUuid().equals(vhatIDUUIDAuthority))
 						{
 							vuid = id.getDenotation().toString();
 							break;
@@ -196,7 +205,7 @@ public class CHDRImportMojo extends AbstractMojo
 						UUID descUUID = null;
 						for (TkIdentifier id : d.getAdditionalIdComponents())
 						{
-							if (id.getAuthorityUuid().equals(vhatId.getProperty("VUID").getUUID()))
+							if (id.getAuthorityUuid().equals(vhatIDUUIDAuthority))
 							{
 								descVuid = id.getDenotation().toString();
 								descUUID = d.getPrimordialComponentUuid();
@@ -219,9 +228,6 @@ public class CHDRImportMojo extends AbstractMojo
 			vhatConcepts = null;
 
 			ConsoleUtil.println("Indexed UUIDs and descriptions from VHAT file");
-
-			File touch = new File(f, "CHDREConcepts.jbin");
-			dos = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(touch)));
 
 			EConcept metaDataRoot = eConceptUtil_.createConcept("CHDR Metadata", ArchitectonicAuxiliary.Concept.ARCHITECTONIC_ROOT_CONCEPT.getPrimoridalUid());
 			metaDataRoot.writeExternal(dos);
@@ -553,7 +559,7 @@ public class CHDRImportMojo extends AbstractMojo
 
 	private UUID makeRefsetUUID(String refsetType, String value)
 	{
-		return ConverterUUID.nameUUIDFromBytes((uuidRoot_ + "CHDR-Refset:" + refsetType + ":" + value).getBytes());
+		return ConverterUUID.createNamespaceUUIDFromString("CHDR-Refset:" + refsetType + ":" + value);
 	}
 
 	private UUID makeUUID(Concept c)
@@ -561,11 +567,11 @@ public class CHDRImportMojo extends AbstractMojo
 		// The code bit makes it line up with VHAT generation for sanity
 		if (ConceptType.VHAT == c.getType())
 		{
-			return ConverterUUID.nameUUIDFromBytes((uuidRootVhat_ + "code:" + c.getId()).getBytes());
+			return ConverterUUID.createNamespaceUUIDFromString(vhatNamespaceUUID, "code:" + c.getId());
 		}
 		else
 		{
-			return ConverterUUID.nameUUIDFromBytes((uuidRoot_ + c.getType().name() + ":" + c.getId()).getBytes());
+			return ConverterUUID.createNamespaceUUIDFromString(c.getType().name() + ":" + c.getId());
 		}
 	}
 
@@ -615,7 +621,7 @@ public class CHDRImportMojo extends AbstractMojo
 		}
 	}
 
-	public static void main(String[] args) throws MojoExecutionException
+	public static void main(String[] args) throws Exception
 	{
 		CHDRImportMojo i = new CHDRImportMojo();
 		i.outputDirectory = new File("../chdr-econcept/target");

@@ -24,9 +24,9 @@ public class PT_Relations extends BPT_Relations
 		}
 	}
 
-	public PT_Relations(String uuidRoot)
+	public PT_Relations()
 	{
-		super(uuidRoot, "CHDR");
+		super("CHDR");
 		for (MediationMapping mm : MediationMapping.values())
 		{
 			addProperty(mm.getProperty());

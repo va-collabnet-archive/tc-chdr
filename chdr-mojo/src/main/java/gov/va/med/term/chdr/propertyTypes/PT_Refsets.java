@@ -24,9 +24,9 @@ public class PT_Refsets extends PropertyType
 		}
 	}
 
-	public PT_Refsets(String uuidRoot)
+	public PT_Refsets()
 	{
-		super("RefSets", uuidRoot);
+		super("RefSets");
 		for (Refsets r : Refsets.values())
 		{
 			addProperty(r.getProperty());

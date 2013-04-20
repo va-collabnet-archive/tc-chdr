@@ -5,18 +5,18 @@
 	<parent>
 		<groupId>gov.va.oia.terminology.converters</groupId>
 		<artifactId>chdr</artifactId>
-		<version>1.0</version>
+		<version>1.0-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>chdr-econcept</artifactId>
 	<packaging>pom</packaging>
 	<name>chdr-econcept</name>
 	<!-- this should be set to ${sourceData.version}-loader-${project.parent.version} but that doesn't appease the maven gods that know best.... -->
-	<version>release_63-loader-1.0</version>
+	<version>release_63-loader-1.0-SNAPSHOT</version>
 
 	<properties>
 		<sourceData.version>release_63</sourceData.version>
-		<vhatSourceData.version>2013.02.11-loader-1.5</vhatSourceData.version>
+		<vhatSourceData.version>2013.02.11-loader-2.0-SNAPSHOT</vhatSourceData.version>
 	</properties>
 
 	<build>
@@ -63,13 +63,8 @@
 							<outputDirectory>${project.build.directory}/generated-resources/data</outputDirectory>
 						</configuration>
 					</execution>
-				</executions>
-			</plugin>
-			<plugin>  <!-- We also need to read the VHAT data file in order to load CHDR -->
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<executions>
 					<execution>
+						<!-- We also need to read the VHAT data file in order to load CHDR -->
 						<id>fetch-VHAT-data</id>
 						<phase>generate-sources</phase>
 						<goals>
@@ -89,7 +84,6 @@
 					</execution>
 				</executions>
 			</plugin>
-
 			<plugin>
 				<groupId>${project.groupId}</groupId>
 				<artifactId>chdr-mojo</artifactId>

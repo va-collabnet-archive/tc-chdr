@@ -58,8 +58,8 @@ public class CHDRImportMojo extends AbstractMojo
 	private PT_ContentVersion contentVersion;
 	private PT_IDs ids;
 	private PT_Relations rels;
-	private PT_Refsets relRefsets;
 	private PT_Attributes attributes;
+	private PT_Refsets refsets;
 	private EConceptUtility eConceptUtil_;
 	private DataOutputStream dos;
 
@@ -124,8 +124,8 @@ public class CHDRImportMojo extends AbstractMojo
 			contentVersion = new PT_ContentVersion();
 			ids = new PT_IDs();
 			rels = new PT_Relations();
-			relRefsets = new PT_Refsets();
 			attributes = new PT_Attributes();
+			refsets = new PT_Refsets();
 			
 			//This is how the UUID for the VHAT ID type is created.
 			vhatIDUUIDAuthority = ConverterUUID.createNamespaceUUIDFromString(vhatNamespaceUUID, ids.getPropertyTypeDescription() + ":VUID");
@@ -160,6 +160,12 @@ public class CHDRImportMojo extends AbstractMojo
 
 			for (EConcept c : vhatConcepts)
 			{
+				if (c.getDescriptions() == null 
+						&& (c.getPrimordialUuid().equals(eConceptUtil_.pathOriginRefSetUUID_) || c.getPrimordialUuid().equals(eConceptUtil_.pathRefSetUUID_)))
+				{
+					//ignore these two - they don't have descriptions, but that is ok...
+					continue;
+				}
 				String vuid = null;
 				if (c.getConceptAttributes() != null && c.getConceptAttributes().getAdditionalIdComponents() != null)
 				{
@@ -232,24 +238,27 @@ public class CHDRImportMojo extends AbstractMojo
 			EConcept metaDataRoot = eConceptUtil_.createConcept("CHDR Metadata", ArchitectonicAuxiliary.Concept.ARCHITECTONIC_ROOT_CONCEPT.getPrimoridalUid());
 			metaDataRoot.writeExternal(dos);
 
-			EConcept vaRefsets = eConceptUtil_.createVARefsetRootConcept();
-			vaRefsets.writeExternal(dos);
-
 			eConceptUtil_.loadMetaDataItems(contentVersion, metaDataRoot.getPrimordialUuid(), dos);
 			eConceptUtil_.loadMetaDataItems(ids, metaDataRoot.getPrimordialUuid(), dos);
 			eConceptUtil_.loadMetaDataItems(rels, metaDataRoot.getPrimordialUuid(), dos);
-			eConceptUtil_.loadMetaDataItems(relRefsets, metaDataRoot.getPrimordialUuid(), dos);
 			eConceptUtil_.loadMetaDataItems(attributes, metaDataRoot.getPrimordialUuid(), dos);
-
+			eConceptUtil_.loadMetaDataItems(refsets, metaDataRoot.getPrimordialUuid(), dos);
+			
 			HashSet<String> missingIds = new HashSet<String>();
 
-			EConcept chdr = eConceptUtil_.createConcept("CHDR Refsets", vhatRootUUID);
+			EConcept chdr = refsets.getRefsetIdentityParent();  //"CHDR Refsets" concept
 			eConceptUtil_.addStringAnnotation(chdr, cdh.getVersion(), ContentVersion.VERSION.getProperty().getUUID(), false);
 			eConceptUtil_.addStringAnnotation(chdr, releaseVersion, BaseContentVersion.RELEASE.getProperty().getUUID(), false);
 			eConceptUtil_.addStringAnnotation(chdr, loaderVersion, BaseContentVersion.LOADER_VERSION.getProperty().getUUID(), false);
-			// Also hang it under refsets
-			eConceptUtil_.addRelationship(chdr, vaRefsets.getPrimordialUuid());
-			chdr.writeExternal(dos);
+			// Also hang it under vhat root
+			eConceptUtil_.addRelationship(chdr, vhatRootUUID);
+			
+			ConsoleUtil.println("Metadata load stats");
+			for (String line : eConceptUtil_.getLoadStats().getSummary())
+			{
+				ConsoleUtil.println(line);
+			}
+			eConceptUtil_.clearLoadStats();
 
 			// Strip out any concepts with no mapping
 			BufferedWriter bw = new BufferedWriter(new FileWriter(new File(outputDirectory, "VUIDs in CHDR with no mapping.tsv")));
@@ -271,7 +280,7 @@ public class CHDRImportMojo extends AbstractMojo
 			ConsoleUtil.println("CHDR concepts with no mapping: " + noMapping + " - logged to 'VUIDs in CHDR with no mapping.tsv' and ignored");
 
 			// Create the CHDR refset (all VUIDs mentioned in the data files)
-			EConcept chdrAllConcepts = eConceptUtil_.createConcept("All CHDR Concepts", chdr.getPrimordialUuid());
+			EConcept chdrAllConcepts = refsets.getConcept(PT_Refsets.Refsets.ALL.getProperty());
 
 			for (VHATConcept c : cdh.getVhatConcepts().values())
 			{
@@ -286,39 +295,34 @@ public class CHDRImportMojo extends AbstractMojo
 				{
 					memberUUID = member.getUUID();
 				}
-				eConceptUtil_.addRefsetMember(chdrAllConcepts, memberUUID, makeRefsetUUID("CHDR", c.getId()), true, null);
+				eConceptUtil_.addRefsetMember(chdrAllConcepts, memberUUID, null, makeRefsetUUID("CHDR", c.getId()), true, null);
 			}
 
 			ConsoleUtil.println(missingIds.size() + " VUIDs exist in CHDR that do not exist in VHAT");
 
-			chdrAllConcepts.writeExternal(dos);
-
 			// Create the drug products refset
-			EConcept drugProducts = eConceptUtil_.createConcept("Drug Products", chdr.getPrimordialUuid());
+			EConcept drugProducts = refsets.getConcept(PT_Refsets.Refsets.DRUG_PRODUCTS.getProperty());
 			for (Concept concept : cdh.getDrugProducts().values())
 			{
 				UUID memberUUID = createRefsetMember(concept, PT_IDs.ID.DRUG_MEDIATION_CODE.getProperty().getUUID());
-				eConceptUtil_.addRefsetMember(drugProducts, memberUUID, makeRefsetUUID("Drug Products", concept.getId()), true, null);
+				eConceptUtil_.addRefsetMember(drugProducts, memberUUID, null, makeRefsetUUID("Drug Products", concept.getId()), true, null);
 			}
-			drugProducts.writeExternal(dos);
 
 			// and the Reactants refset
-			EConcept reactants = eConceptUtil_.createConcept("Reactants", chdr.getPrimordialUuid());
+			EConcept reactants = refsets.getConcept(PT_Refsets.Refsets.REACTANTS.getProperty());
 			for (Concept concept : cdh.getReactants().values())
 			{
 				UUID memberUUID = createRefsetMember(concept, PT_IDs.ID.REACTANT_MEDIATION_CODE.getProperty().getUUID());
-				eConceptUtil_.addRefsetMember(reactants, memberUUID, makeRefsetUUID("Reactants", concept.getId()), true, null);
+				eConceptUtil_.addRefsetMember(reactants, memberUUID, null, makeRefsetUUID("Reactants", concept.getId()), true, null);
 			}
-			reactants.writeExternal(dos);
 
 			// and the Reactions refset
-			EConcept reactions = eConceptUtil_.createConcept("Reactions", chdr.getPrimordialUuid());
+			EConcept reactions = refsets.getConcept(PT_Refsets.Refsets.REACTIONS.getProperty());
 			for (Concept concept : cdh.getReactions().values())
 			{
 				UUID memberUUID = createRefsetMember(concept, PT_IDs.ID.REACTION_MEDIATION_CODE.getProperty().getUUID());
-				eConceptUtil_.addRefsetMember(reactions, memberUUID, makeRefsetUUID("Reactions", concept.getId()), true, null);
+				eConceptUtil_.addRefsetMember(reactions, memberUUID, null, makeRefsetUUID("Reactions", concept.getId()), true, null);
 			}
-			reactions.writeExternal(dos);
 
 			// Hang this under VHAT as well
 			EConcept chdrPendingRoot = eConceptUtil_.createConcept("CHDR Pending", vhatRootUUID);
@@ -369,11 +373,11 @@ public class CHDRImportMojo extends AbstractMojo
 					{
 						//I tried to map these to the UUID of the description that had the Rel, but the WB doesn't allow refsets to descriptions, only concept.
 						//So now, I just stick the description and the VUID in as a string annotation on the rel.
-						createOrUpdateRel(eConcept, makeUUID(relConcept), PT_Refsets.Refsets.INCOMING.getProperty().getUUID(), member.getDescription() + " - " + c.getId());
+						createOrUpdateRel(eConcept, makeUUID(relConcept), PT_Relations.MediationMapping.INCOMING.getProperty().getUUID(), member.getDescription() + " - " + c.getId());
 					}
 					for (Concept relConcept : c.getOutgoingRels())
 					{
-						createOrUpdateRel(eConcept, makeUUID(relConcept), PT_Refsets.Refsets.OUTGOING.getProperty().getUUID(), member.getDescription() + " - " + c.getId());
+						createOrUpdateRel(eConcept, makeUUID(relConcept), PT_Relations.MediationMapping.OUTGOING.getProperty().getUUID(), member.getDescription() + " - " + c.getId());
 					}
 				}
 				else
@@ -386,6 +390,9 @@ public class CHDRImportMojo extends AbstractMojo
 			{
 				eConcept.writeExternal(dos);
 			}
+			
+			//And write out the refset concepts
+			eConceptUtil_.storeRefsetConcepts(refsets, dos);
 
 			ConsoleUtil.println("Mappings to descriptions (moved up to concepts): " + descMatch);
 			ConsoleUtil.println("Mappings to concepts: " + conceptMatch);

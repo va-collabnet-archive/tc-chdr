@@ -1,14 +1,16 @@
 package gov.va.med.term.chdr.propertyTypes;
 
+import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.BPT_Refsets;
 import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.Property;
-import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.PropertyType;
 
-public class PT_Refsets extends PropertyType
+public class PT_Refsets extends BPT_Refsets
 {
 	public enum Refsets
 	{
-		INCOMING("Incoming to VA"), 
-		OUTGOING("Outgoing from VA");
+		ALL("All CHDR Concepts"), 
+		DRUG_PRODUCTS("Drug Products"),
+		REACTANTS("Reactants"),
+		REACTIONS("Reactions");
 
 		private Property property;
 
@@ -26,10 +28,10 @@ public class PT_Refsets extends PropertyType
 
 	public PT_Refsets()
 	{
-		super("RefSets");
-		for (Refsets r : Refsets.values())
+		super("CHDR");
+		for (Refsets mm : Refsets.values())
 		{
-			addProperty(r.getProperty());
+			addProperty(mm.getProperty());
 		}
 	}
 }

@@ -574,11 +574,11 @@ public class CHDRImportMojo extends AbstractMojo
 		// The code bit makes it line up with VHAT generation for sanity
 		if (ConceptType.VHAT == c.getType())
 		{
-			return ConverterUUID.createNamespaceUUIDFromString(vhatNamespaceUUID, "code:" + c.getId());
+			return ConverterUUID.createNamespaceUUIDFromString(vhatNamespaceUUID, "code:" + c.getId(), true);
 		}
 		else
 		{
-			return ConverterUUID.createNamespaceUUIDFromString(c.getType().name() + ":" + c.getId());
+			return ConverterUUID.createNamespaceUUIDFromString(c.getType().name() + ":" + c.getId(), true);
 		}
 	}
 

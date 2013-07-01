@@ -13,7 +13,6 @@ import gov.va.med.term.chdr.propertyTypes.PT_Relations;
 import gov.va.oia.terminology.converters.sharedUtils.ConsoleUtil;
 import gov.va.oia.terminology.converters.sharedUtils.EConceptUtility;
 import gov.va.oia.terminology.converters.sharedUtils.EConceptUtility.DescriptionType;
-import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.BPT_ContentVersion.BaseContentVersion;
 import gov.va.oia.terminology.converters.sharedUtils.stats.ConverterUUID;
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
@@ -248,8 +247,8 @@ public class CHDRImportMojo extends AbstractMojo
 
 			EConcept chdr = refsets.getRefsetIdentityParent();  //"CHDR Refsets" concept
 			eConceptUtil_.addStringAnnotation(chdr, cdh.getVersion(), ContentVersion.VERSION.getProperty().getUUID(), false);
-			eConceptUtil_.addStringAnnotation(chdr, releaseVersion, BaseContentVersion.RELEASE.getProperty().getUUID(), false);
-			eConceptUtil_.addStringAnnotation(chdr, loaderVersion, BaseContentVersion.LOADER_VERSION.getProperty().getUUID(), false);
+			eConceptUtil_.addStringAnnotation(chdr, releaseVersion, contentVersion.RELEASE.getUUID(), false);
+			eConceptUtil_.addStringAnnotation(chdr, loaderVersion, contentVersion.LOADER_VERSION.getUUID(), false);
 			// Also hang it under vhat root
 			eConceptUtil_.addRelationship(chdr, vhatRootUUID);
 			

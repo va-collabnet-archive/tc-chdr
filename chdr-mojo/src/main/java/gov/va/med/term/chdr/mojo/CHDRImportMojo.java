@@ -249,6 +249,7 @@ public class CHDRImportMojo extends AbstractMojo
 			eConceptUtil_.addStringAnnotation(chdr, cdh.getVersion(), ContentVersion.VERSION.getProperty().getUUID(), false);
 			eConceptUtil_.addStringAnnotation(chdr, releaseVersion, contentVersion.RELEASE.getUUID(), false);
 			eConceptUtil_.addStringAnnotation(chdr, loaderVersion, contentVersion.LOADER_VERSION.getUUID(), false);
+			eConceptUtil_.addDescription(chdr, "Clinical Health Data Repository", DescriptionType.SYNONYM, true, null, null, false);
 			// Also hang it under vhat root
 			eConceptUtil_.addRelationship(chdr, vhatRootUUID);
 			

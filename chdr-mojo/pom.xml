@@ -48,5 +48,9 @@
 			<version>2.3</version>
 			<scope>compile</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+		</dependency>
 	</dependencies>
 </project>

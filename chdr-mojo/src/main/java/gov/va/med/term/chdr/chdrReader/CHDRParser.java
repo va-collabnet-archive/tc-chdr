@@ -10,6 +10,7 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import com.google.common.base.CharMatcher;
 import au.com.bytecode.opencsv.CSVReader;
 
 public class CHDRParser
@@ -122,7 +123,9 @@ public class CHDRParser
 						{
 							if (cell.getCellType() == Cell.CELL_TYPE_STRING)
 							{
-								lineItems.add(cell.getStringCellValue());
+								//They have some NO-BREAK-SPACE characters in here... what a mess.
+								//Java trim() doesn't trim NO-BREAK-SPACE (C2 A0)
+								lineItems.add(CharMatcher.WHITESPACE.trimFrom(cell.getStringCellValue()));  
 							}
 							else if (cell.getCellType() == Cell.CELL_TYPE_NUMERIC)
 							{

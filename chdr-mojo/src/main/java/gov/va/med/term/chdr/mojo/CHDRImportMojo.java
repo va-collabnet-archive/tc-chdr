@@ -29,10 +29,13 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.UUID;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.dwfa.cement.ArchitectonicAuxiliary;
+import org.dwfa.util.id.Type3UuidFactory;
+import org.dwfa.util.id.Type5UuidFactory;
 import org.ihtsdo.etypes.EConcept;
 import org.ihtsdo.tk.dto.concept.component.description.TkDescription;
 import org.ihtsdo.tk.dto.concept.component.identifier.TkIdentifier;
@@ -66,6 +69,14 @@ public class CHDRImportMojo extends AbstractMojo
 	
 	private int dupeRelCount = 0;
 	private int dupeRelCountWithAnnotation = 0;
+	
+	private HashMap<String, String> sctCodesMissingMapping = new HashMap<>();
+	private HashMap<String, String> rxnCodesMissingMapping = new HashMap<>();
+	//They provide CUI codes, but mostly link to NDF-RT concepts via CUI codes.  So go directly to NDF-RT, since we don't have NDF-RT from UMLS at the moment.
+	//private HashMap<String, String> umlsCodesMissingMapping = new HashMap<>();
+	private HashMap<String, String> ndfRtCodesMissingMapping = new HashMap<>();
+	
+	private HashMap<String, UUID> chdrIDToUUID = new HashMap<>();
 
 	/**
 	 * Where to put the output file.
@@ -91,6 +102,39 @@ public class CHDRImportMojo extends AbstractMojo
 	 * @required
 	 */
 	private File vhatInputFile;
+	
+	/**
+	 * Location of sct jbin data file. Expected to be a directory.
+	 * 
+	 * @parameter
+	 * @required
+	 */
+	private File sctInputFile;
+	
+	/**
+	 * Location of RxNorm jbin data file. Expected to be a directory.
+	 * 
+	 * @parameter
+	 * @required
+	 */
+	private File rxnInputFile;
+	
+//	/**
+//	 * Location of UMLS jbin data file. Expected to be a directory.
+//	 * 
+//	 * @parameter
+//	 * @required
+//	 */
+//	private File umlsInputFile;
+	
+	/**
+	 * Location of NDF-RT jbin data file. Expected to be a directory.
+	 * 
+	 * @parameter
+	 * @required
+	 */
+	private File ndfRtInputFile;
+
 
 	/**
 	 * Loader version number Use parent because project.version pulls in the version of the data file, which I don't want.
@@ -152,6 +196,7 @@ public class CHDRImportMojo extends AbstractMojo
 			{
 				vhatConcepts.add(new EConcept(in));
 			}
+			in.close();
 
 			ConsoleUtil.println("Read " + vhatConcepts.size() + " concepts from the VHAT jbin file");
 
@@ -233,6 +278,140 @@ public class CHDRImportMojo extends AbstractMojo
 			vhatConcepts = null;
 
 			ConsoleUtil.println("Indexed UUIDs and descriptions from VHAT file");
+			ConsoleUtil.println("Indexing SCT Concepts");
+			
+			// Read in the SCT data
+			HashSet<UUID> sctConcepts = new HashSet<>();
+			in = new DataInputStream(new FileInputStream(sctInputFile.listFiles(new FilenameFilter()
+			{
+				@Override
+				public boolean accept(File dir, String name)
+				{
+					if (name.endsWith(".jbin"))
+					{
+						return true;
+					}
+					return false;
+				}
+			})[0]));
+
+			while (in.available() > 0)
+			{
+				if (sctConcepts.size() % 1000 == 0)
+				{
+					ConsoleUtil.showProgress();
+				}
+				sctConcepts.add(new EConcept(in).getPrimordialUuid());
+			}
+			in.close();
+			ConsoleUtil.println("Indexed UUIDs from SCT file - read " + sctConcepts.size() + " concepts");
+			
+			ConsoleUtil.println("Indexing RxNorm Concepts");
+			
+			// Read in the RxNorm data
+			HashSet<UUID> rxNormConcepts = new HashSet<>();
+			in = new DataInputStream(new FileInputStream(rxnInputFile.listFiles(new FilenameFilter()
+			{
+				@Override
+				public boolean accept(File dir, String name)
+				{
+					if (name.endsWith(".jbin"))
+					{
+						return true;
+					}
+					return false;
+				}
+			})[0]));
+
+			while (in.available() > 0)
+			{
+				if (rxNormConcepts.size() % 1000 == 0)
+				{
+					ConsoleUtil.showProgress();
+				}
+				rxNormConcepts.add(new EConcept(in).getPrimordialUuid());
+			}
+			in.close();
+			ConsoleUtil.println("Indexed UUIDs from RxNorm file - read " + rxNormConcepts.size() + " concepts");
+			
+//			ConsoleUtil.println("Indexing UMLS Concepts");
+//			
+//			// Read in the UMLS data
+//			HashSet<UUID> umlsConcepts = new HashSet<>();
+//			in = new DataInputStream(new FileInputStream(umlsInputFile.listFiles(new FilenameFilter()
+//			{
+//				@Override
+//				public boolean accept(File dir, String name)
+//				{
+//					if (name.endsWith(".jbin"))
+//					{
+//						return true;
+//					}
+//					return false;
+//				}
+//			})[0]));
+//
+//			while (in.available() > 0)
+//			{
+//				if (sctConcepts.size() % 1000 == 0)
+//				{
+//					ConsoleUtil.showProgress();
+//				}
+//				//I really only need the CUI based concepts, not the AUI based concepts, so I could dig in an check, but I have enough RAM not to care at the moment...
+//				umlsConcepts.add(new EConcept(in).getPrimordialUuid());
+//			}
+//			in.close();
+//			ConsoleUtil.println("Indexed UUIDs from UMLS file - read " + umlsConcepts.size() + " concepts");
+			
+			ConsoleUtil.println("Indexing NDF-RT Concepts");
+			
+			// Read in the NDF-RT data
+			HashMap<String, UUID> ndfRtConcepts = new HashMap<>();
+			in = new DataInputStream(new FileInputStream(ndfRtInputFile.listFiles(new FilenameFilter()
+			{
+				@Override
+				public boolean accept(File dir, String name)
+				{
+					if (name.endsWith(".jbin"))
+					{
+						return true;
+					}
+					return false;
+				}
+			})[0]));
+
+			while (in.available() > 0)
+			{
+				if (ndfRtConcepts.size() % 1000 == 0)
+				{
+					ConsoleUtil.showProgress();
+				}
+				
+				EConcept tempConcept = new EConcept(in);
+				//Dig through, to find the 'UMLS CUI' string extension'
+				String cuiCode = null;
+				
+				if (tempConcept.getConceptAttributes() != null && tempConcept.getConceptAttributes().getAnnotations() != null)
+				{
+					for (TkRefexAbstractMember<?> annotation : tempConcept.getConceptAttributes().getAnnotations())
+					{
+						//dd7722cd-ebe8-5554-aee3-4b792feb8d98 is the UUID for 'UMLS CUI' in NDF-RT.  could put code here that shows how to do that from the 
+						//NDF-RT loader... but not bothering at the moment
+						if (annotation instanceof TkRefsetStrMember && annotation.getRefexUuid().equals(UUID.fromString("dd7722cd-ebe8-5554-aee3-4b792feb8d98")))
+						{
+							cuiCode = ((TkRefsetStrMember)annotation).getString1();
+							break;
+						}
+					}
+				}
+				
+				if (cuiCode != null)
+				{
+					ndfRtConcepts.put(cuiCode, tempConcept.getPrimordialUuid());
+				}
+			}
+			in.close();
+			ConsoleUtil.println("Indexed UUIDs from NDF-RT file - read " + ndfRtConcepts.size() + " concepts");
 
 			EConcept metaDataRoot = eConceptUtil_.createConcept("CHDR Metadata", ArchitectonicAuxiliary.Concept.ARCHITECTONIC_ROOT_CONCEPT.getPrimoridalUid());
 			metaDataRoot.writeExternal(dos);
@@ -304,24 +483,60 @@ public class CHDRImportMojo extends AbstractMojo
 			EConcept drugProducts = refsets.getConcept(PT_Refsets.Refsets.DRUG_PRODUCTS.getProperty());
 			for (Concept concept : cdh.getDrugProducts().values())
 			{
-				UUID memberUUID = createRefsetMember(concept, PT_IDs.ID.DRUG_MEDIATION_CODE.getProperty().getUUID());
+				UUID memberUUID;
+				UUID rxNormCode = Type5UuidFactory.get(Type5UuidFactory.get(null, "gov.va.med.term.RRF.RXN.RxNorm"), "CUI:" + concept.getId());
+				if (rxNormConcepts.contains(rxNormCode))
+				{
+					memberUUID = rxNormCode;
+				}
+				else
+				{
+					//only create if necessary
+					memberUUID = createRefsetMember(concept, PT_IDs.ID.DRUG_MEDIATION_CODE.getProperty().getUUID());
+					rxnCodesMissingMapping.put(concept.getId(), (concept.getDescriptions().size() > 0 ? concept.getDescriptions().iterator().next() : ""));
+				}
 				eConceptUtil_.addRefsetMember(drugProducts, memberUUID, null, makeRefsetUUID("Drug Products", concept.getId()), true, null);
+				chdrIDToUUID.put(concept.getId(), memberUUID);
 			}
 
 			// and the Reactants refset
 			EConcept reactants = refsets.getConcept(PT_Refsets.Refsets.REACTANTS.getProperty());
 			for (Concept concept : cdh.getReactants().values())
 			{
-				UUID memberUUID = createRefsetMember(concept, PT_IDs.ID.REACTANT_MEDIATION_CODE.getProperty().getUUID());
+				UUID memberUUID;
+				//UUID umlsCode = Type5UuidFactory.get(Type5UuidFactory.get(null, "gov.va.med.term.RRF.MR.UMLS"), "CUI:" + concept.getId());
+				if (ndfRtConcepts.containsKey(concept.getId()))
+				{
+					memberUUID = ndfRtConcepts.get(concept.getId());
+				}
+				else
+				{
+					memberUUID = createRefsetMember(concept, PT_IDs.ID.REACTANT_MEDIATION_CODE.getProperty().getUUID());
+					//umlsCodesMissingMapping.put(concept.getId(), (concept.getDescriptions().size() > 0 ? concept.getDescriptions().iterator().next() : ""));
+					ndfRtCodesMissingMapping.put(concept.getId(), (concept.getDescriptions().size() > 0 ? concept.getDescriptions().iterator().next() : ""));
+				}
 				eConceptUtil_.addRefsetMember(reactants, memberUUID, null, makeRefsetUUID("Reactants", concept.getId()), true, null);
+				chdrIDToUUID.put(concept.getId(), memberUUID);
 			}
 
-			// and the Reactions refset
+			// and the Reactions refset - these are SCT codes 
 			EConcept reactions = refsets.getConcept(PT_Refsets.Refsets.REACTIONS.getProperty());
 			for (Concept concept : cdh.getReactions().values())
 			{
-				UUID memberUUID = createRefsetMember(concept, PT_IDs.ID.REACTION_MEDIATION_CODE.getProperty().getUUID());
+				UUID memberUUID = null;
+				UUID sctCode = Type3UuidFactory.fromSNOMED(concept.getId());
+				if (sctConcepts.contains(sctCode))
+				{
+					memberUUID = sctCode;
+				}
+				else
+				{
+					//Only create if necessary
+					memberUUID = createRefsetMember(concept, PT_IDs.ID.REACTION_MEDIATION_CODE.getProperty().getUUID());
+					sctCodesMissingMapping.put(concept.getId(), (concept.getDescriptions().size() > 0 ? concept.getDescriptions().iterator().next() : ""));
+				}
 				eConceptUtil_.addRefsetMember(reactions, memberUUID, null, makeRefsetUUID("Reactions", concept.getId()), true, null);
+				chdrIDToUUID.put(concept.getId(), memberUUID);
 			}
 
 			// Hang this under VHAT as well
@@ -359,11 +574,21 @@ public class CHDRImportMojo extends AbstractMojo
 					conceptMatch++;
 					for (Concept relConcept : c.getIncomingRels())
 					{
-						eConceptUtil_.addRelationship(eConcept, makeUUID(relConcept), PT_Relations.MediationMapping.INCOMING.getProperty().getUUID(), null);
+						UUID target = chdrIDToUUID.get(relConcept.getId());
+						if (target == null)
+						{
+							throw new RuntimeException("oops");
+						}
+						eConceptUtil_.addRelationship(eConcept, target, PT_Relations.MediationMapping.INCOMING.getProperty().getUUID(), null);
 					}
 					for (Concept relConcept : c.getOutgoingRels())
 					{
-						eConceptUtil_.addRelationship(eConcept, makeUUID(relConcept), PT_Relations.MediationMapping.OUTGOING.getProperty().getUUID(), null);
+						UUID target = chdrIDToUUID.get(relConcept.getId());
+						if (target == null)
+						{
+							throw new RuntimeException("oops");
+						}
+						eConceptUtil_.addRelationship(eConcept, target, PT_Relations.MediationMapping.OUTGOING.getProperty().getUUID(), null);
 					}
 				}
 				else if (WBType.Description == member.getType())
@@ -371,13 +596,23 @@ public class CHDRImportMojo extends AbstractMojo
 					descMatch++;
 					for (Concept relConcept : c.getIncomingRels())
 					{
+						UUID target = chdrIDToUUID.get(relConcept.getId());
+						if (target == null)
+						{
+							throw new RuntimeException("oops");
+						}
 						//I tried to map these to the UUID of the description that had the Rel, but the WB doesn't allow refsets to descriptions, only concept.
 						//So now, I just stick the description and the VUID in as a string annotation on the rel.
-						createOrUpdateRel(eConcept, makeUUID(relConcept), PT_Relations.MediationMapping.INCOMING.getProperty().getUUID(), member.getDescription() + " - " + c.getId());
+						createOrUpdateRel(eConcept, target, PT_Relations.MediationMapping.INCOMING.getProperty().getUUID(), member.getDescription() + " - " + c.getId());
 					}
 					for (Concept relConcept : c.getOutgoingRels())
 					{
-						createOrUpdateRel(eConcept, makeUUID(relConcept), PT_Relations.MediationMapping.OUTGOING.getProperty().getUUID(), member.getDescription() + " - " + c.getId());
+						UUID target = chdrIDToUUID.get(relConcept.getId());
+						if (target == null)
+						{
+							throw new RuntimeException("oops");
+						}
+						createOrUpdateRel(eConcept, target, PT_Relations.MediationMapping.OUTGOING.getProperty().getUUID(), member.getDescription() + " - " + c.getId());
 					}
 				}
 				else
@@ -444,6 +679,54 @@ public class CHDRImportMojo extends AbstractMojo
 				}
 			}
 			bw.close();
+			
+			if (sctCodesMissingMapping.size() > 0)
+			{
+				ConsoleUtil.println("Writing 'Missing SCT Mappings' file - " + sctCodesMissingMapping.size());
+				bw = new BufferedWriter(new FileWriter(new File(outputDirectory, "Missing SCT Mappings.tsv")));
+				bw.write("SCT Code from CHDR\tDescription from CHDR" + System.getProperty("line.separator"));
+				for (Entry<String, String> s : sctCodesMissingMapping.entrySet())
+				{
+					bw.write(s.getKey() + "\t" + s.getValue() + System.getProperty("line.separator"));
+				}
+				bw.close();
+			}
+			
+			if (rxnCodesMissingMapping.size() > 0)
+			{
+				ConsoleUtil.println("Writing 'Missing RxNorm Mappings' file - " + rxnCodesMissingMapping.size());
+				bw = new BufferedWriter(new FileWriter(new File(outputDirectory, "Missing RxNorm Mappings.tsv")));
+				bw.write("RxNorm Code from CHDR\tDescription from CHDR" + System.getProperty("line.separator"));
+				for (Entry<String, String> s : rxnCodesMissingMapping.entrySet())
+				{
+					bw.write(s.getKey() + "\t" + s.getValue() + System.getProperty("line.separator"));
+				}
+				bw.close();
+			}
+			
+//			if (umlsCodesMissingMapping.size() > 0)
+//			{
+//				ConsoleUtil.println("Writing 'Missing UMLS Mappings' file - " + umlsCodesMissingMapping.size());
+//				bw = new BufferedWriter(new FileWriter(new File(outputDirectory, "Missing UMLS Mappings.tsv")));
+//				bw.write("UMLS Code from CHDR\tDescription from CHDR" + System.getProperty("line.separator"));
+//				for (Entry<String, String> s : umlsCodesMissingMapping.entrySet())
+//				{
+//					bw.write(s.getKey() + "\t" + s.getValue() + System.getProperty("line.separator"));
+//				}
+//				bw.close();
+//			}
+			
+			if (ndfRtCodesMissingMapping.size() > 0)
+			{
+				ConsoleUtil.println("Writing 'Missing NDF-RT Mappings' file - " + ndfRtCodesMissingMapping.size());
+				bw = new BufferedWriter(new FileWriter(new File(outputDirectory, "Missing NDF-RT Mappings.tsv")));
+				bw.write("NDF-RT CUI Code from CHDR\tDescription from CHDR" + System.getProperty("line.separator"));
+				for (Entry<String, String> s : ndfRtCodesMissingMapping.entrySet())
+				{
+					bw.write(s.getKey() + "\t" + s.getValue() + System.getProperty("line.separator"));
+				}
+				bw.close();
+			}
 			
 			ConsoleUtil.writeOutputToFile(new File(outputDirectory, "ConsoleOutput.txt").toPath());
 		}

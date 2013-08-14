@@ -17,6 +17,10 @@
 	<properties>
 		<sourceData.version>release_63</sourceData.version>
 		<vhatSourceData.version>2013.02.11-loader-2.4-SNAPSHOT</vhatSourceData.version>
+		<snomed.version>2013.01.31-build-13</snomed.version>
+		<rxnorm.version>2013.05.06-loader-1.1-SNAPSHOT</rxnorm.version>
+		<!-- umls.version>2013AA-loader-1.0-SNAPSHOT</umls.version-->
+		<ndfRt.version>2013.02.04.12AB-loader-2.3</ndfRt.version>
 	</properties>
 
 	<build>
@@ -82,6 +86,82 @@
 							<outputDirectory>${project.build.directory}/generated-resources/data/VHAT</outputDirectory>
 						</configuration>
 					</execution>
+					<execution>
+						<!-- We also need to read the SNOMED data file in order to load CHDR -->
+						<id>extract-snomed</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>org.ihtsdo.sct.baseline</groupId>
+									<artifactId>sct-econcept</artifactId>
+									<version>${snomed.version}</version>
+									<classifier>latest</classifier>
+									<type>zip</type>
+								</artifactItem>
+							</artifactItems>
+							<outputDirectory>${project.build.directory}/generated-resources/data/SCT</outputDirectory>
+						</configuration>
+					</execution>
+					<execution>
+						<!-- We also need RxNorm data to load CHDR -->
+						<id>fetch-RxNorm-data</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>gov.va.oia.terminology.converters</groupId>
+									<artifactId>RxNorm-econcept</artifactId>
+									<version>${rxnorm.version}</version>
+									<type>zip</type>
+								</artifactItem>
+							</artifactItems>
+							<outputDirectory>${project.build.directory}/generated-resources/data/RxNorm</outputDirectory>
+						</configuration>
+					</execution>
+					<!-- execution>
+						<!- - We also need UMLS data to load CHDR - ->
+						<id>fetch-UMLS-data</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>gov.va.oia.terminology.converters</groupId>
+									<artifactId>UMLS-econcept</artifactId>
+									<version>${umls.version}</version>
+									<type>zip</type>
+								</artifactItem>
+							</artifactItems>
+							<outputDirectory>${project.build.directory}/generated-resources/data/UMLS</outputDirectory>
+						</configuration>
+					</execution-->
+					<execution>
+						<id>fetch-ndfrt-data</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>gov.va.oia.terminology.converters</groupId>
+									<artifactId>ndfrtDTSExtract-econcept</artifactId>
+									<version>${ndfRt.version}</version>
+									<type>zip</type>
+								</artifactItem>
+							</artifactItems>
+							<outputDirectory>${project.build.directory}/generated-resources/data/NDF-RT</outputDirectory>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 			<plugin>
@@ -99,6 +179,11 @@
 							<inputFile>${project.build.directory}/generated-resources/data</inputFile>
 							
 							<vhatInputFile>${project.build.directory}/generated-resources/data/VHAT</vhatInputFile>
+							<sctInputFile>${project.build.directory}/generated-resources/data/SCT</sctInputFile>
+							<rxnInputFile>${project.build.directory}/generated-resources/data/RxNorm</rxnInputFile>
+							<!-- While they are providing UMLS CUIs - they mostly link to NDF-RT - which we don't have from UMLS.  So link to NDF-RT concepts directly instead -->
+							<!--umlsInputFile>${project.build.directory}/generated-resources/data/UMLS</umlsInputFile-->
+							<ndfRtInputFile>${project.build.directory}/generated-resources/data/NDF-RT</ndfRtInputFile>
 						</configuration>
 						<goals>
 							<goal>convert-CHDR-data</goal>

@@ -12,12 +12,12 @@
 	<packaging>pom</packaging>
 	<name>chdr-econcept</name>
 	<!-- this should be set to ${sourceData.version}-loader-${project.parent.version} but that doesn't appease the maven gods that know best.... -->
-	<version>release_63-loader-1.5-SNAPSHOT</version>
+	<version>release_63a-loader-1.5-SNAPSHOT</version>
 
 	<properties>
-		<sourceData.version>release_63</sourceData.version>
+		<sourceData.version>release_63a</sourceData.version>
 		<vhatSourceData.version>2013.02.11-loader-2.4</vhatSourceData.version>
-		<snomed.version>2013.07.31-build-4-SNAPSHOT</snomed.version>
+		<snomed.version>2013.07.31-build-3</snomed.version>
 		<rxnorm.version>2013.05.06-loader-1.1</rxnorm.version>
 		<!-- umls.version>2013AA-loader-1.0-SNAPSHOT</umls.version-->
 		<ndfRt.version>2013.02.04.12AB-loader-2.4</ndfRt.version>

@@ -34,7 +34,6 @@ import java.util.UUID;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.dwfa.cement.ArchitectonicAuxiliary;
-import org.dwfa.util.id.Type3UuidFactory;
 import org.dwfa.util.id.Type5UuidFactory;
 import org.ihtsdo.etypes.EConcept;
 import org.ihtsdo.tk.dto.concept.component.description.TkDescription;
@@ -281,7 +280,8 @@ public class CHDRImportMojo extends AbstractMojo
 			ConsoleUtil.println("Indexing SCT Concepts");
 			
 			// Read in the SCT data
-			HashSet<UUID> sctConcepts = new HashSet<>();
+			HashMap<String, UUID> sctConcepts = new HashMap<>();
+			UUID sctIDType = UUID.fromString("0418a591-f75b-39ad-be2c-3ab849326da9");  //"SNOMED integer id"
 			in = new DataInputStream(new FileInputStream(sctInputFile.listFiles(new FilenameFilter()
 			{
 				@Override
@@ -301,7 +301,20 @@ public class CHDRImportMojo extends AbstractMojo
 				{
 					ConsoleUtil.showProgress();
 				}
-				sctConcepts.add(new EConcept(in).getPrimordialUuid());
+				EConcept concept = new EConcept(in);
+				
+				if (concept.getConceptAttributes() != null && concept.getConceptAttributes().getAdditionalIdComponents() != null)
+				{
+					for (TkIdentifier id : concept.getConceptAttributes().getAdditionalIdComponents())
+					{
+						if (sctIDType.equals(id.getAuthorityUuid()))
+						{
+							//Store these by SCTID, because there is no reliable way to generate a UUID from a SCTID.
+							sctConcepts.put(id.getDenotation().toString(), concept.getPrimordialUuid());
+							break;
+						}
+					}
+				}
 			}
 			in.close();
 			ConsoleUtil.println("Indexed UUIDs from SCT file - read " + sctConcepts.size() + " concepts");
@@ -524,10 +537,9 @@ public class CHDRImportMojo extends AbstractMojo
 			for (Concept concept : cdh.getReactions().values())
 			{
 				UUID memberUUID = null;
-				UUID sctCode = Type3UuidFactory.fromSNOMED(concept.getId());
-				if (sctConcepts.contains(sctCode))
+				if (sctConcepts.containsKey(concept.getId()))
 				{
-					memberUUID = sctCode;
+					memberUUID = sctConcepts.get(concept.getId());
 				}
 				else
 				{

@@ -5,14 +5,14 @@
 	<parent>
 		<groupId>gov.va.oia.terminology.converters</groupId>
 		<artifactId>chdr</artifactId>
-		<version>1.5-SNAPSHOT</version>
+		<version>1.5</version>
 	</parent>
 
 	<artifactId>chdr-econcept</artifactId>
 	<packaging>pom</packaging>
 	<name>chdr-econcept</name>
 	<!-- this should be set to ${sourceData.version}-loader-${project.parent.version} but that doesn't appease the maven gods that know best.... -->
-	<version>release_63a-loader-1.5-SNAPSHOT</version>
+	<version>release_63a-loader-1.5</version>
 
 	<properties>
 		<sourceData.version>release_63a</sourceData.version>

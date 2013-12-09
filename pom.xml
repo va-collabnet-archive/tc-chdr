@@ -62,6 +62,26 @@
 				<artifactId>guava</artifactId>
 				<version>r09</version>
 			</dependency>
+			<dependency>
+				<groupId>commons-codec</groupId>
+				<artifactId>commons-codec</artifactId>
+				<version>1.4</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.lucene</groupId>
+				<artifactId>lucene-core</artifactId>
+				<version>4.6.0</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.lucene</groupId>
+				<artifactId>lucene-analyzers-common</artifactId>
+				<version>4.6.0</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.lucene</groupId>
+				<artifactId>lucene-queryparser</artifactId>
+				<version>4.6.0</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
@@ -81,6 +101,23 @@
 
 	<modules>
 		<module>chdr-mojo</module>
-		<module>chdr-econcept</module>
 	</modules>
+	
+	<profiles>
+		<profile>
+			<id>convert</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<modules>
+				<module>chdr-econcept</module>
+			</modules>
+		</profile>
+		<profile>
+			<id>analyze</id>
+			<modules>
+				<module>chdr-analyze</module>
+			</modules>
+		</profile>
+	</profiles>
 </project>

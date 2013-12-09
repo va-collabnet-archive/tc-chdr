@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>gov.va.oia.terminology.converters</groupId>
+		<artifactId>chdr</artifactId>
+		<version>1.5</version>
+	</parent>
+
+	<artifactId>chdr-analyze</artifactId>
+	<packaging>pom</packaging>
+	<name>chdr-analyze</name>
+	<!-- this should be set to ${sourceData.version}-loader-${project.parent.version} but that doesn't appease the maven gods that know best.... -->
+	<version>release_63a-loader-1.5</version>
+
+	<properties>
+		<sourceData.version>release_63a</sourceData.version>
+		<vhatSourceData.version>2013.02.11-loader-2.4</vhatSourceData.version>
+		<snomed.version>2013.07.31-build-3</snomed.version>
+		<rxnorm.version>2013.05.06-loader-1.1</rxnorm.version>
+		<ndfRt.version>2013.02.04.12AB-loader-2.4</ndfRt.version>
+	</properties>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-data</id>
+						<configuration>
+							<descriptors>
+								<descriptor>src/main/assembly/generated-artifact.xml</descriptor>
+							</descriptors>
+						</configuration>
+						<goals>
+							<goal>single</goal>
+						</goals>
+						<phase>package</phase>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Get CHDR source file from archiva -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>fetch-CHDR-src</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>gov.va.oia.terminology.source.chdr</groupId>
+									<artifactId>chdr-src-data</artifactId>
+									<version>${sourceData.version}</version>
+									<type>zip</type>
+								</artifactItem>
+							</artifactItems>
+							<outputDirectory>${project.build.directory}/generated-resources/data</outputDirectory>
+						</configuration>
+					</execution>
+					<execution>
+						<!-- We also need to read the VHAT data file in order to load CHDR -->
+						<id>fetch-VHAT-data</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>gov.va.oia.terminology.converters</groupId>
+									<artifactId>vhat-econcept</artifactId>
+									<version>${vhatSourceData.version}</version>
+									<type>zip</type>
+								</artifactItem>
+							</artifactItems>
+							<outputDirectory>${project.build.directory}/generated-resources/data/VHAT</outputDirectory>
+						</configuration>
+					</execution>
+					<execution>
+						<!-- We also need to read the SNOMED data file in order to load CHDR -->
+						<id>extract-snomed</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>org.ihtsdo.sct.baseline</groupId>
+									<artifactId>sct-econcept</artifactId>
+									<version>${snomed.version}</version>
+									<classifier>latest</classifier>
+									<type>zip</type>
+								</artifactItem>
+							</artifactItems>
+							<outputDirectory>${project.build.directory}/generated-resources/data/SCT</outputDirectory>
+						</configuration>
+					</execution>
+					<execution>
+						<!-- We also need RxNorm data to load CHDR -->
+						<id>fetch-RxNorm-data</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>gov.va.oia.terminology.converters</groupId>
+									<artifactId>RxNorm-econcept</artifactId>
+									<version>${rxnorm.version}</version>
+									<type>zip</type>
+								</artifactItem>
+							</artifactItems>
+							<outputDirectory>${project.build.directory}/generated-resources/data/RxNorm</outputDirectory>
+						</configuration>
+					</execution>
+					<execution>
+						<id>fetch-ndfrt-data</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>gov.va.oia.terminology.converters</groupId>
+									<artifactId>ndfrtDTSExtract-econcept</artifactId>
+									<version>${ndfRt.version}</version>
+									<type>zip</type>
+								</artifactItem>
+							</artifactItems>
+							<outputDirectory>${project.build.directory}/generated-resources/data/NDF-RT</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>chdr-mojo</artifactId>
+				<version>${project.parent.version}</version>
+				<executions>
+					<execution>
+						<id>analyze-CHDR-data</id>
+						<configuration>
+							<!-- Use this to process a local file (optionally, comment out the fetch VHAT XML data section above as well) -->
+							<!--inputFile>/mnt/d/Work/Apelon/Workspaces/Loaders/chdr/chdr-econcept/CHDR Data/</inputFile--> 
+							
+							<!-- Use this to process the xsl files that come out of the zip file found in the fetch-CHDR-data process and also the vhat econcept file. -->
+							<inputFile>${project.build.directory}/generated-resources/data</inputFile>
+							
+							<vhatInputFile>${project.build.directory}/generated-resources/data/VHAT</vhatInputFile>
+							<externalInputFiles>
+								<externalInputFile>${project.build.directory}/generated-resources/data/SCT</externalInputFile>
+								<externalInputFile>${project.build.directory}/generated-resources/data/RxNorm</externalInputFile>
+								<externalInputFile>${project.build.directory}/generated-resources/data/NDF-RT</externalInputFile>
+							</externalInputFiles>
+						</configuration>
+						<goals>
+							<goal>analyze-CHDR-data</goal>
+						</goals>
+						<phase>generate-resources</phase>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

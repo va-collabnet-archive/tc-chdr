@@ -4,7 +4,7 @@ import gov.va.oia.terminology.converters.sharedUtils.ConsoleUtil;
 
 public class CHDR
 {
-	enum DIRECTION
+	public enum DIRECTION
 	{
 		Incoming, Outgoing
 	};

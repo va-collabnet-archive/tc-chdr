@@ -80,12 +80,12 @@ public class CHDRDataHolder
 					VHATConcept vhat = vhatConcepts.get(chdr.VUID);
 					if (vhat == null)
 					{
-						vhat = new VHATConcept(chdr.VUID, chdr.VUIDText);
+						vhat = new VHATConcept(chdr.VUID, chdr.VUIDText, type, chdr.direction);
 						vhatConcepts.put(chdr.VUID, vhat);
 					}
 					else
 					{
-						vhat.addDescription(chdr.VUIDText);
+						vhat.addDescription(chdr.VUIDText, type, chdr.direction);
 					}
 
 					if (chdr.MediationCode != null && chdr.MediationCode.trim().length() > 0)

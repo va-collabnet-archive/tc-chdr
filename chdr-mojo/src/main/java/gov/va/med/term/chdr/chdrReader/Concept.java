@@ -50,6 +50,26 @@ public class Concept
 		return descriptions;
 	}
 	
+	/**
+	 * Throws an error if there is more than one description
+	 * @throws Exception 
+	 */
+	public String getDescription() throws Exception
+	{
+		if (descriptions.size() == 0)
+		{
+			return null;
+		}
+		else if (descriptions.size() == 1)
+		{
+			return descriptions.iterator().next();
+		}
+		else
+		{
+			throw new Exception("More than 1 description on the concept");
+		}
+	}
+	
 	public ConceptType getType()
 	{
 		return type;

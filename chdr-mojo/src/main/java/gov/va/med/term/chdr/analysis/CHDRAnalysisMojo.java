@@ -894,11 +894,11 @@ public class CHDRAnalysisMojo extends AbstractMojo
 			{
 				matchType = MatchType.NEW_LUCENE_2;
 			}
-			else if (matchAccuracy < .65d)
+			else if (matchAccuracy < .65d && matchAccuracy > 0)
 			{
 				matchType = MatchType.SIMILAR;
 			}
-			else if (matchAccuracy < 0d)
+			else if (matchAccuracy <= 0d)
 			{
 				matchType = MatchType.NO_MATCH;
 			}
@@ -908,7 +908,7 @@ public class CHDRAnalysisMojo extends AbstractMojo
 			}
 
 			return new String[] { vhatDescriptionId, vhatDescription, vhatCHDRDescription, vhatConceptId, currentMappingId, currentMappingDescription, matchText,
-					matchAccuracy + "", matchType.getDescription(), matchConceptId, detectedErrors, notes };
+					(matchAccuracy > 0d ? matchAccuracy + "" : ""), matchType.getDescription(), matchConceptId, detectedErrors, notes };
 		}
 	}
 	

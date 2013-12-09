@@ -6,7 +6,7 @@ public class Stats
 {
 	AtomicInteger chdrVhatTextInconsistency, chdrMediationTextInconsistency, newExactMatches, newFuzzyMatches, invalidVHATIdentifer, errors, otherNotes, chdrItemCount,
 			newSoundsLikeMatch, newLuceneMatches, verifiedExactMatch, noMatch, invalidMediationIdentifier, existingExactMatch, existingExactMatchToOtherDescription,
-			existingNonExactMatch;
+			existingNonExactMatch, misMatchedConceptId;
 
 	protected Stats()
 	{
@@ -26,6 +26,7 @@ public class Stats
 		this.existingExactMatch = new AtomicInteger();
 		this.existingNonExactMatch = new AtomicInteger();
 		this.existingExactMatchToOtherDescription = new AtomicInteger();
+		this.misMatchedConceptId = new AtomicInteger();
 	}
 
 	public void incChdrVhatTextInconsistency()
@@ -107,26 +108,32 @@ public class Stats
 	{
 		existingExactMatchToOtherDescription.incrementAndGet();
 	}
+	
+	public void incMisMatchedConceptId()
+	{
+		misMatchedConceptId.incrementAndGet();
+	}
 
 	public String toString()
 	{
 		String eol = System.getProperty("line.separator");
 		StringBuilder sb = new StringBuilder();
 		sb.append("Processed " + chdrItemCount + " CHDR rows" + eol);
-		sb.append("Inconsistencies between CHDR and VHAT descriptions: " + chdrVhatTextInconsistency + eol);
-		sb.append("Inconsistencies between CHDR and Mediation Terminology descriptions: " + chdrMediationTextInconsistency + eol);
-		sb.append("Invalid VHAT Identifier linked by CHDR: " + invalidVHATIdentifer + eol);
-		sb.append("Invalid Mediation Identifier linked by CHDR: " + invalidMediationIdentifier + eol);
+		sb.append("CHDR VHAT Description Inconsistent: " + chdrVhatTextInconsistency + eol);
+		sb.append("Incoming and Outgoing Mediation Text Inconsistency and/or Mediation Text Incorrect for Concept: " + chdrMediationTextInconsistency + eol);
+		sb.append("VHAT Identifier Missing in VHAT: " + invalidVHATIdentifer + eol);
+		sb.append("Mediation ID Missing in Terminology: " + invalidMediationIdentifier + eol);
+		sb.append("Mediation Text doesn't exist in Mediation Concept: " + misMatchedConceptId + eol);
 		sb.append("Total Error count: " + errors + eol);
 		sb.append("Other Note Count: " + otherNotes + eol);
 		sb.append("Verified Mediation Code and Text Matches: " + verifiedExactMatch + eol);
 		sb.append("Existing Exact Matches: " + existingExactMatch + eol);
 		sb.append("Existing Exact Match to unlisted description: " + existingExactMatchToOtherDescription + eol);
 		sb.append("Existing Non-Exact Matches: " + existingNonExactMatch + eol);
-		sb.append("New Exact Matches: " + newExactMatches + eol);
-		sb.append("New Sounds-Like Matches: " + newSoundsLikeMatch + eol);
-		sb.append("New Lucene Matches: " + newLuceneMatches + eol);
-		sb.append("New Fuzzy Matches: " + newFuzzyMatches + eol);
+		sb.append("Proposed Exact Matches: " + newExactMatches + eol);
+		sb.append("Proposed Sounds-Like Matches: " + newSoundsLikeMatch + eol);
+		sb.append("Proposed Lucene Matches: " + newLuceneMatches + eol);
+		sb.append("Proposed Fuzzy Matches: " + newFuzzyMatches + eol);
 		sb.append("No Match: " + noMatch + eol);
 
 		return sb.toString();

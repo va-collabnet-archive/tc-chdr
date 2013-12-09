@@ -571,7 +571,7 @@ public class CHDRAnalysisMojo extends AbstractMojo
 			}
 
 			String matchText = null;
-			String matchAccuracy = null;
+			double matchAccuracy = -1;
 			String matchConceptId = null;
 
 			if (currentMappingDescription.length() > 0)
@@ -624,7 +624,7 @@ public class CHDRAnalysisMojo extends AbstractMojo
 						{
 							matchConceptId = di.getConceptId();
 							matchText = di.getDescription();
-							matchAccuracy = matchText.equalsIgnoreCase(vhatDescription) ? "1.0" : "0.9";
+							matchAccuracy = matchText.equalsIgnoreCase(vhatDescription) ? 1f : 0.9f;
 						}
 					}
 					for (DescriptionInfo di : result.values())
@@ -633,7 +633,7 @@ public class CHDRAnalysisMojo extends AbstractMojo
 						{
 							matchConceptId = di.getConceptId();
 							matchText = di.getDescription();
-							matchAccuracy = matchText.equalsIgnoreCase(vhatDescription) ? "1.0" : "0.9";
+							matchAccuracy = matchText.equalsIgnoreCase(vhatDescription) ? 1f : .9f;
 						}
 						else
 						{
@@ -644,7 +644,7 @@ public class CHDRAnalysisMojo extends AbstractMojo
 						}
 					}
 					
-					if (matchAccuracy.equals("1.0"))
+					if (matchAccuracy == 1f)
 					{
 						stats.incExistingExactMatch();
 					}
@@ -660,13 +660,13 @@ public class CHDRAnalysisMojo extends AbstractMojo
 								if (di.getDescription().toLowerCase().equals(vhatDescription.toLowerCase()))
 								{
 									matchText = di.getDescription();
-									matchAccuracy = "0.95";
+									matchAccuracy = .95f;
 									break;
 								}
 							}
 						}
 						
-						if (matchAccuracy.equals("0.95"))
+						if (matchAccuracy == 0.95f)
 						{
 							stats.incExistingExactMatchToOtherDescription();
 						}
@@ -685,6 +685,7 @@ public class CHDRAnalysisMojo extends AbstractMojo
 						if (superValidate)
 						{
 							errors.add("The text value matches, but the conceptID does not match.");
+							stats.incMisMatchedConceptId();
 						}
 						else
 						{
@@ -711,7 +712,7 @@ public class CHDRAnalysisMojo extends AbstractMojo
 								stats.incNewSoundsLikeMatch();
 								matchConceptId = di.getConceptId();
 								matchText = di.getDescription();
-								matchAccuracy = "0.8";
+								matchAccuracy = .8f;
 							}
 							else
 							{
@@ -742,7 +743,7 @@ public class CHDRAnalysisMojo extends AbstractMojo
 									{
 										matchConceptId = di.getConceptId();
 										matchText = di.getDescription();
-										matchAccuracy = (diff == 0  ? "0.75" : (diff == 1 ? ".70" : ".65"));
+										matchAccuracy = (diff == 0  ? .75f : (diff == 1 ? .7f : .65f));
 									}
 									else
 									{
@@ -791,7 +792,7 @@ public class CHDRAnalysisMojo extends AbstractMojo
 								{
 									matchConceptId = di.getConceptId();
 									matchText = di.getDescription();
-									matchAccuracy = new String((0.64 - smallestRatio) + "");
+									matchAccuracy = 0.64f - smallestRatio;
 								}
 								else
 								{
@@ -814,7 +815,7 @@ public class CHDRAnalysisMojo extends AbstractMojo
 						{
 							matchConceptId = di.getConceptId();
 							matchText = di.getDescription();
-							matchAccuracy = "1.0";
+							matchAccuracy = 1d;
 						}
 						else
 						{
@@ -849,15 +850,65 @@ public class CHDRAnalysisMojo extends AbstractMojo
 				notes = notes.substring(0, notes.length() - 2);
 			}
 
-			stats.incOtherNotesCount(errors.size());
+			stats.incOtherNotesCount(otherNotes.size());
 			
 			if (matchConceptId == null)
 			{
 				stats.incNoMatch();
 			}
+			
+			MatchType matchType;
+			
+			if (matchAccuracy == 1d)
+			{
+				if (currentMappingId == null || currentMappingId.length() == 0)
+				{
+					matchType = MatchType.NEW_EXACT_MATCH;
+				}
+				else
+				{
+					matchType = MatchType.EXACT_MATCH;
+				}
+			}
+			else if (matchAccuracy == .95d)
+			{
+				matchType = MatchType.EXACT_MATCH_OTHER_DESC;
+			}
+			else if (matchAccuracy == .9d)
+			{
+				matchType = MatchType.EXISTING_NO_MATCH;
+			}
+			else if (matchAccuracy == .8d)
+			{
+				matchType = MatchType.NEW_SOUNDS_LIKE;
+			}
+			else if (matchAccuracy == .75d)
+			{
+				matchType = MatchType.NEW_LUCENE;
+			}
+			else if (matchAccuracy == .70d)
+			{
+				matchType = MatchType.NEW_LUCENE_1;
+			}
+			else if (matchAccuracy == .65d)
+			{
+				matchType = MatchType.NEW_LUCENE_2;
+			}
+			else if (matchAccuracy < .65d)
+			{
+				matchType = MatchType.SIMILAR;
+			}
+			else if (matchAccuracy < 0d)
+			{
+				matchType = MatchType.NO_MATCH;
+			}
+			else
+			{
+				throw new RuntimeException("Oops");
+			}
 
 			return new String[] { vhatDescriptionId, vhatDescription, vhatCHDRDescription, vhatConceptId, currentMappingId, currentMappingDescription, matchText,
-					matchAccuracy, matchConceptId, detectedErrors, notes };
+					matchAccuracy + "", matchType.getDescription(), matchConceptId, detectedErrors, notes };
 		}
 	}
 	
@@ -947,7 +998,7 @@ public class CHDRAnalysisMojo extends AbstractMojo
 	public static String[] getOutputHeader()
 	{
 		return new String[] { "VHAT Description ID", "VHAT Description", "VHAT Description in CHDR", "VHAT Concept ID", "Current Mapping ID",
-				"Current Mapping Description", "Match Text", "Match Accuracy", "Match Concept ID", "Detected Errors", "Other Notes" };
+				"Current Mapping Description", "Match Text", "Match Accuracy", "Match Type", "Match Concept ID", "Detected Errors", "Other Notes" };
 	}
 
 	public static void main(String[] args) throws MojoExecutionException, MojoFailureException

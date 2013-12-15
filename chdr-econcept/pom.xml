@@ -16,11 +16,11 @@
 
 	<properties>
 		<sourceData.version>release_63a</sourceData.version>
-		<vhatSourceData.version>2013.02.11-loader-2.4</vhatSourceData.version>
+		<vhatSourceData.version>2013.02.11-loader-2.5</vhatSourceData.version>
 		<snomed.version>2013.07.31-build-3</snomed.version>
-		<rxnorm.version>2013.05.06-loader-1.1</rxnorm.version>
+		<rxnorm.version>2013.05.06-loader-1.2</rxnorm.version>
 		<!-- umls.version>2013AA-loader-1.0-SNAPSHOT</umls.version-->
-		<ndfRt.version>2013.02.04.12AB-loader-2.4</ndfRt.version>
+		<ndfRt.version>2013.02.04.12AB-loader-2.5</ndfRt.version>
 	</properties>
 
 	<build>

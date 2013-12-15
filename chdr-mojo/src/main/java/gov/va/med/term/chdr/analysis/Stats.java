@@ -6,7 +6,7 @@ public class Stats
 {
 	AtomicInteger chdrVhatTextInconsistency, chdrMediationTextInconsistency, newExactMatches, newFuzzyMatches, invalidVHATIdentifer, errors, otherNotes, chdrItemCount,
 			newSoundsLikeMatch, newLuceneMatches, verifiedExactMatch, noMatch, invalidMediationIdentifier, existingExactMatch, existingExactMatchToOtherDescription,
-			existingNonExactMatch, misMatchedConceptId;
+			existingNonExactMatch, misMatchedConceptId, startingRowsWithMatches, startingRowsWithNoMatches;
 
 	protected Stats()
 	{
@@ -27,6 +27,8 @@ public class Stats
 		this.existingNonExactMatch = new AtomicInteger();
 		this.existingExactMatchToOtherDescription = new AtomicInteger();
 		this.misMatchedConceptId = new AtomicInteger();
+		this.startingRowsWithMatches = new AtomicInteger();
+		this.startingRowsWithNoMatches = new AtomicInteger();
 	}
 
 	public void incChdrVhatTextInconsistency()
@@ -113,29 +115,50 @@ public class Stats
 	{
 		misMatchedConceptId.incrementAndGet();
 	}
+	
+	public void incStartingRowsWithMatches()
+	{
+		startingRowsWithMatches.incrementAndGet();
+	}
+	
+	public void incStartingRowsWithoutMatches()
+	{
+		startingRowsWithNoMatches.incrementAndGet();
+	}
 
 	public String toString()
 	{
 		String eol = System.getProperty("line.separator");
 		StringBuilder sb = new StringBuilder();
 		sb.append("Processed " + chdrItemCount + " CHDR rows" + eol);
-		sb.append("CHDR VHAT Description Inconsistent: " + chdrVhatTextInconsistency + eol);
-		sb.append("Incoming and Outgoing Mediation Text Inconsistency and/or Mediation Text Incorrect for Concept: " + chdrMediationTextInconsistency + eol);
-		sb.append("VHAT Identifier Missing in VHAT: " + invalidVHATIdentifer + eol);
-		sb.append("Mediation ID Missing in Terminology: " + invalidMediationIdentifier + eol);
-		sb.append("Mediation Text doesn't exist in Mediation Concept: " + misMatchedConceptId + eol);
-		sb.append("Total Error count: " + errors + eol);
-		sb.append("Other Note Count: " + otherNotes + eol);
-		sb.append("Verified Mediation Code and Text Matches: " + verifiedExactMatch + eol);
-		sb.append("Existing Exact Matches: " + existingExactMatch + eol);
-		sb.append("Existing Exact Match to unlisted description: " + existingExactMatchToOtherDescription + eol);
-		sb.append("Existing Non-Exact Matches: " + existingNonExactMatch + eol);
-		sb.append("Proposed Exact Matches: " + newExactMatches + eol);
-		sb.append("Proposed Sounds-Like Matches: " + newSoundsLikeMatch + eol);
-		sb.append("Proposed Lucene Matches: " + newLuceneMatches + eol);
-		sb.append("Proposed Fuzzy Matches: " + newFuzzyMatches + eol);
-		sb.append("No Match: " + noMatch + eol);
-
+		sb.append("Identified " + startingRowsWithMatches + " existing CHDR rows with matches" + eol);
+		sb.append("Identified " + startingRowsWithNoMatches + " CHDR rows without matches" + eol);
+		sb.append("Verified mediation code and mediation text matches: " + verifiedExactMatch + eol);
+		sb.append(eol);
+		sb.append("*** Existing Mappings ***" + eol);
+		sb.append("Existing exact Matches: " + existingExactMatch + eol);
+		sb.append("Existing exact match to unlisted description: " + existingExactMatchToOtherDescription + eol);
+		sb.append("Existing non-exact matches: " + existingNonExactMatch + eol);
+		sb.append(eol);
+		sb.append("*** Proposed Matches ***" + eol);
+		sb.append("Proposed exact matches: " + newExactMatches + eol);
+		sb.append("Proposed \"Sounds-Like\" matches: " + newSoundsLikeMatch + eol);
+		sb.append("Proposed Lucene matches: " + newLuceneMatches + eol);
+		sb.append("Proposed \"Fuzzy\" matches: " + newFuzzyMatches + eol);
+		sb.append(eol);
+		sb.append("*** Non-Matching ***" + eol);
+		sb.append("No matches exist nor are any matches proposed: " + noMatch + eol);
+		sb.append(eol);
+		sb.append("*** Errors in Data ***" + eol);
+		sb.append("CHDR VHAT description inconsistent: " + chdrVhatTextInconsistency + eol);
+		sb.append("Incoming and outgoing mediation text inconsistency and/or mediation text incorrect for concept: " + chdrMediationTextInconsistency + eol);
+		sb.append("VHAT ID listed by CHDR not found in VHAT: " + invalidVHATIdentifer + eol);
+		sb.append("Mediation ID listed by CHDR not found in terminology: " + invalidMediationIdentifier + eol);
+		sb.append("Mediation text listed by CHDR not found in the specified terminology concept: " + misMatchedConceptId + eol);
+		sb.append("Total CHDR Rows with errors in data: " + errors + eol);
+		sb.append(eol);
+		sb.append("*** Notes on Existing Matches ***" + eol);
+		sb.append("Other note count: " + otherNotes + eol);
 		return sb.toString();
 	}
 

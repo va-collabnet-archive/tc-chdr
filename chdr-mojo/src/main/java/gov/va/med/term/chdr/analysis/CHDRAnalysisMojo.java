@@ -386,6 +386,7 @@ public class CHDRAnalysisMojo extends AbstractMojo
 
 			File incomingOutputFile = new File(outputFolder, externalInputFile.getName() + "-" + ct.name() + "-" + "incoming.tsv");
 			CSVWriter incomingOutputFileWriter = new CSVWriter(new FileWriter(incomingOutputFile), '\t');
+			ExcelFileWriter incomingEfw = new ExcelFileWriter(getOutputHeader());
 			incomingOutputFileWriter.writeNext(getOutputHeader());
 			Stats incomingStats = new Stats();
 			List<String[]> incomingResult = Collections.synchronizedList(new ArrayList<String[]>());
@@ -393,6 +394,7 @@ public class CHDRAnalysisMojo extends AbstractMojo
 
 			File outgoingOutputFile = new File(outputFolder, externalInputFile.getName() + "-" + ct.name() + "-" + "outgoing.tsv");
 			CSVWriter outgoingOutputFileWriter = new CSVWriter(new FileWriter(outgoingOutputFile), '\t');
+			ExcelFileWriter outgoingEfw = new ExcelFileWriter(getOutputHeader());
 			outgoingOutputFileWriter.writeNext(getOutputHeader());
 			Stats outgoingStats = new Stats();
 
@@ -417,14 +419,18 @@ public class CHDRAnalysisMojo extends AbstractMojo
 			for (String[] s : incomingResult)
 			{
 				incomingOutputFileWriter.writeNext(s);
+				incomingEfw.addLine(s);
 			}
 			for (String[] s : outgoingResult)
 			{
 				outgoingOutputFileWriter.writeNext(s);
+				outgoingEfw.addLine(s);
 			}
 			
 			incomingOutputFileWriter.close();
 			outgoingOutputFileWriter.close();
+			incomingEfw.writeFile(new File(outputFolder, externalInputFile.getName() + "-" + ct.name() + "-" + "incoming.xls"));
+			outgoingEfw.writeFile(new File(outputFolder, externalInputFile.getName() + "-" + ct.name() + "-" + "outgoing.xls"));
 
 			ConsoleUtil.println(incomingOutputFile.getName().substring(0, incomingOutputFile.getName().length() - 4) + " Stats:");
 			ConsoleUtil.println(incomingStats.toString());
@@ -531,6 +537,14 @@ public class CHDRAnalysisMojo extends AbstractMojo
 			String vhatCHDRDescription = chdrVhatConcept_.getDescription();
 			String vhatDescriptionId = chdrVhatConcept_.getId();
 			String currentMappingId = (chdrLinkedConcept == null ? "" : chdrLinkedConcept.getId());
+			if (currentMappingId.length() > 0)
+			{
+				stats.incStartingRowsWithMatches();
+			}
+			else
+			{
+				stats.incStartingRowsWithoutMatches();
+			}
 			String currentMappingDescription;
 			try
 			{
@@ -852,7 +866,7 @@ public class CHDRAnalysisMojo extends AbstractMojo
 
 			stats.incOtherNotesCount(otherNotes.size());
 			
-			if (matchConceptId == null)
+			if (matchConceptId == null && StringUtils.isBlank(currentMappingId))
 			{
 				stats.incNoMatch();
 			}

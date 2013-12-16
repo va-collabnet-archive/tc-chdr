@@ -1,6 +1,7 @@
 package gov.va.med.term.chdr.analysis;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import org.apache.commons.lang.StringUtils;
 
 public class Stats
 {
@@ -125,10 +126,15 @@ public class Stats
 	{
 		startingRowsWithNoMatches.incrementAndGet();
 	}
-
+	
 	public String toString()
 	{
-		String eol = System.getProperty("line.separator");
+		return toString(null);
+	}
+
+	public String toString(String lineSeparator)
+	{
+		String eol = (StringUtils.isEmpty(lineSeparator) ? System.getProperty("line.separator") : lineSeparator);
 		StringBuilder sb = new StringBuilder();
 		sb.append("Processed " + chdrItemCount + " CHDR rows" + eol);
 		sb.append("Identified " + startingRowsWithMatches + " existing CHDR rows with matches" + eol);
@@ -136,7 +142,7 @@ public class Stats
 		sb.append("Verified mediation code and mediation text matches: " + verifiedExactMatch + eol);
 		sb.append(eol);
 		sb.append("*** Existing Mappings ***" + eol);
-		sb.append("Existing exact Matches: " + existingExactMatch + eol);
+		sb.append("Existing exact matches: " + existingExactMatch + eol);
 		sb.append("Existing exact match to unlisted description: " + existingExactMatchToOtherDescription + eol);
 		sb.append("Existing non-exact matches: " + existingNonExactMatch + eol);
 		sb.append(eol);

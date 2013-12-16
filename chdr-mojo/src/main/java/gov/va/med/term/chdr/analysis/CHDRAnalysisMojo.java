@@ -385,7 +385,8 @@ public class CHDRAnalysisMojo extends AbstractMojo
 			outputFolder.mkdir();
 
 			File incomingOutputFile = new File(outputFolder, externalInputFile.getName() + "-" + ct.name() + "-" + "incoming.tsv");
-			CSVWriter incomingOutputFileWriter = new CSVWriter(new FileWriter(incomingOutputFile), '\t');
+			CSVWriter incomingOutputFileWriter = new CSVWriter(new FileWriter(incomingOutputFile), '\t',
+					CSVWriter.DEFAULT_QUOTE_CHARACTER, CSVWriter.DEFAULT_ESCAPE_CHARACTER, "\r\n");
 			ExcelFileWriter incomingEfw = new ExcelFileWriter(getOutputHeader());
 			incomingOutputFileWriter.writeNext(getOutputHeader());
 			Stats incomingStats = new Stats();
@@ -393,7 +394,8 @@ public class CHDRAnalysisMojo extends AbstractMojo
 			List<String[]> outgoingResult = Collections.synchronizedList(new ArrayList<String[]>());
 
 			File outgoingOutputFile = new File(outputFolder, externalInputFile.getName() + "-" + ct.name() + "-" + "outgoing.tsv");
-			CSVWriter outgoingOutputFileWriter = new CSVWriter(new FileWriter(outgoingOutputFile), '\t');
+			CSVWriter outgoingOutputFileWriter = new CSVWriter(new FileWriter(outgoingOutputFile), '\t', 
+					CSVWriter.DEFAULT_QUOTE_CHARACTER, CSVWriter.DEFAULT_ESCAPE_CHARACTER, "\r\n");
 			ExcelFileWriter outgoingEfw = new ExcelFileWriter(getOutputHeader());
 			outgoingOutputFileWriter.writeNext(getOutputHeader());
 			Stats outgoingStats = new Stats();
@@ -436,12 +438,12 @@ public class CHDRAnalysisMojo extends AbstractMojo
 			ConsoleUtil.println(incomingStats.toString());
 
 			Files.write(new File(incomingOutputFile.getParentFile(), incomingOutputFile.getName().substring(0, incomingOutputFile.getName().length() - 4) + "-stats.txt")
-					.toPath(), incomingStats.toString().getBytes(), StandardOpenOption.CREATE);
+					.toPath(), incomingStats.toString("\r\n").getBytes(), StandardOpenOption.CREATE);
 
 			ConsoleUtil.println(outgoingOutputFile.getName().substring(0, outgoingOutputFile.getName().length() - 4) + " Stats:");
 			ConsoleUtil.println(outgoingStats.toString());
 			Files.write(new File(outgoingOutputFile.getParentFile(), outgoingOutputFile.getName().substring(0, outgoingOutputFile.getName().length() - 4) + "-stats.txt")
-					.toPath(), outgoingStats.toString().getBytes(), StandardOpenOption.CREATE);
+					.toPath(), outgoingStats.toString("\r\n").getBytes(), StandardOpenOption.CREATE);
 		}
 
 	}

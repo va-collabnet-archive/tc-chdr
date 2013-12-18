@@ -10,6 +10,13 @@
 			</includes>
 			<outputDirectory>/</outputDirectory>
 		</fileSet>
+		<fileSet>
+			<directory>${project.build.directory}/../</directory>
+			<includes>
+				<include>*.xlsx</include>
+			</includes>
+			<outputDirectory>/</outputDirectory>
+		</fileSet>
 	</fileSets>
 	<includeBaseDirectory>false</includeBaseDirectory>
 </assembly>

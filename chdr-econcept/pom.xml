@@ -5,22 +5,22 @@
 	<parent>
 		<groupId>gov.va.oia.terminology.converters</groupId>
 		<artifactId>chdr</artifactId>
-		<version>1.5</version>
+		<version>1.5a</version>
 	</parent>
 
 	<artifactId>chdr-econcept</artifactId>
 	<packaging>pom</packaging>
 	<name>chdr-econcept</name>
 	<!-- this should be set to ${sourceData.version}-loader-${project.parent.version} but that doesn't appease the maven gods that know best.... -->
-	<version>release_63a-loader-1.5</version>
+	<version>release_63a-loader-1.5a</version>
 
 	<properties>
 		<sourceData.version>release_63a</sourceData.version>
 		<vhatSourceData.version>2013.02.11-loader-2.5</vhatSourceData.version>
-		<snomed.version>2013.07.31-build-3</snomed.version>
-		<rxnorm.version>2013.05.06-loader-1.2</rxnorm.version>
+		<snomed.version>2013.07.31-build-4</snomed.version>
+		<rxnorm.version>2013.12.02-loader-1.3</rxnorm.version>
 		<!-- umls.version>2013AA-loader-1.0-SNAPSHOT</umls.version-->
-		<ndfRt.version>2013.02.04.12AB-loader-2.5</ndfRt.version>
+		<ndfRt.version>2013.11.04.13AA-loader-2.6</ndfRt.version>
 	</properties>
 
 	<build>

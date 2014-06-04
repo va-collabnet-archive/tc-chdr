@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>gov.va.oia.terminology.converters</groupId>
 	<artifactId>chdr</artifactId>
-	<version>1.5.2</version>
+	<version>1.5.3</version>
 	<name>chdr</name>
 	<packaging>pom</packaging>
 

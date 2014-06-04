@@ -25,9 +25,9 @@ public class CHDRDataHolder
 		 * 
 		 * or
 		 * 
-		 * Drug Products Release 61.xls
-		 * Reactants Release 61.xls
-		 * Reactions Release 61.xls
+		 * [stuff] Drug Products Release 61.xls
+		 * [stuff] Reactants Release 61.xls
+		 * [stuff] Reactions Release 61.xls
 		 */
 
 		for (File f : folderContainingDataFiles.listFiles())
@@ -55,17 +55,17 @@ public class CHDRDataHolder
 
 				HashMap<String, Concept> map;
 				ConceptType type;
-				if (name.equalsIgnoreCase("Drug Products"))
+				if (name.toLowerCase().endsWith("drug products"))
 				{
 					map = drugProducts;
 					type = ConceptType.DRUG;
 				}
-				else if (name.equalsIgnoreCase("Reactants"))
+				else if (name.toLowerCase().endsWith("reactants"))
 				{
 					map = reactants;
 					type = ConceptType.REACTANT;
 				}
-				else if (name.equalsIgnoreCase("Reactions"))
+				else if (name.toLowerCase().endsWith("reactions"))
 				{
 					map = reactions;
 					type = ConceptType.REACTION;

@@ -18,9 +18,9 @@
 		<sourceData.version>release_78</sourceData.version>
 		<vhatSourceData.version>2014.06.02-loader-2.5</vhatSourceData.version>
 		<snomed.version>2014.01.31-build-3</snomed.version>
-		<rxnorm.version>2014.03.03-loader-1.3.1</rxnorm.version>
+		<rxnorm.version>2014.06.02-loader-1.3.1</rxnorm.version>
 		<!-- umls.version>2013AA-loader-1.0-SNAPSHOT</umls.version-->
-		<ndfRt.version>2014.03.03.13AB-loader-2.6.1</ndfRt.version>
+		<ndfRt.version>2014.06.02.13AB-loader-2.6.1</ndfRt.version>
 	</properties>
 
 	<build>

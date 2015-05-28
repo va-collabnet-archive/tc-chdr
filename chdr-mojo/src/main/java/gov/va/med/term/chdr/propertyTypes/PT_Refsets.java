@@ -1,9 +1,9 @@
 package gov.va.med.term.chdr.propertyTypes;
 
-import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.BPT_Refsets;
+import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.BPT_MemberRefsets;
 import gov.va.oia.terminology.converters.sharedUtils.propertyTypes.Property;
 
-public class PT_Refsets extends BPT_Refsets
+public class PT_Refsets extends BPT_MemberRefsets
 {
 	public enum Refsets
 	{

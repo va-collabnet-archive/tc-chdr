@@ -4,7 +4,7 @@ import gov.va.med.term.chdr.chdrReader.CHDRDataHolder;
 import gov.va.med.term.chdr.chdrReader.Concept;
 import gov.va.med.term.chdr.chdrReader.ConceptType;
 import gov.va.med.term.chdr.chdrReader.VHATConcept;
-import gov.va.med.term.chdr.propertyTypes.PT_Attributes;
+import gov.va.med.term.chdr.propertyTypes.PT_Annotations;
 import gov.va.med.term.chdr.propertyTypes.PT_ContentVersion;
 import gov.va.med.term.chdr.propertyTypes.PT_ContentVersion.ContentVersion;
 import gov.va.med.term.chdr.propertyTypes.PT_IDs;
@@ -59,7 +59,7 @@ public class CHDRImportMojo extends AbstractMojo
 	private PT_ContentVersion contentVersion;
 	private PT_IDs ids;
 	private PT_Relations rels;
-	private PT_Attributes attributes;
+	private PT_Annotations attributes;
 	private PT_Refsets refsets;
 	private EConceptUtility eConceptUtil_;
 	private DataOutputStream dos;
@@ -151,6 +151,7 @@ public class CHDRImportMojo extends AbstractMojo
 	 */
 	private String releaseVersion;
 	
+	@Override
 	public void execute() throws MojoExecutionException
 	{
 		try
@@ -162,11 +163,11 @@ public class CHDRImportMojo extends AbstractMojo
 			
 			File touch = new File(outputDirectory, "CHDREConcepts.jbin");
 			dos = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(touch)));
-			eConceptUtil_ = new EConceptUtility(chdrNamespaceBaseSeed, "CHDR Path", dos);
+			eConceptUtil_ = new EConceptUtility(chdrNamespaceBaseSeed, "CHDR Path", dos, System.currentTimeMillis());
 			contentVersion = new PT_ContentVersion();
 			ids = new PT_IDs();
 			rels = new PT_Relations();
-			attributes = new PT_Attributes();
+			attributes = new PT_Annotations();
 			refsets = new PT_Refsets();
 			
 			//This is how the UUID for the VHAT ID type is created.
@@ -656,7 +657,7 @@ public class CHDRImportMojo extends AbstractMojo
 
 			// this could be removed from final release. Just added to help debug editor problems.
 			ConsoleUtil.println("Dumping UUID Debug File");
-			ConverterUUID.dump(new File(outputDirectory, "chdrUuidDebugMap.txt"));
+			ConverterUUID.dump(outputDirectory, "chdrUuid");
 
 			ConsoleUtil.println("Writing 'Missing Concept' file");
 			bw = new BufferedWriter(new FileWriter(new File(outputDirectory, "VUIDs in CHDR not in VHAT.tsv")));
@@ -767,7 +768,7 @@ public class CHDRImportMojo extends AbstractMojo
 						if (annotation instanceof TkRefsetStrMember)
 						{
 							TkRefsetStrMember annot = (TkRefsetStrMember)annotation;
-							if (annot.getString1().equals(annotationValue) && annot.getRefexUuid().equals(PT_Attributes.Attributes.CHDR_REL_SOURCE.getProperty().getUUID()))
+							if (annot.getString1().equals(annotationValue) && annot.getRefexUuid().equals(PT_Annotations.Attributes.CHDR_REL_SOURCE.getProperty().getUUID()))
 							{
 								dupeRelCountWithAnnotation++;
 								annotationFound = true;
@@ -787,7 +788,7 @@ public class CHDRImportMojo extends AbstractMojo
 		
 		if (!annotationFound)
 		{
-			eConceptUtil_.addStringAnnotation(rel, annotationValue, PT_Attributes.Attributes.CHDR_REL_SOURCE.getProperty().getUUID(), false);
+			eConceptUtil_.addStringAnnotation(rel, annotationValue, PT_Annotations.Attributes.CHDR_REL_SOURCE.getProperty().getUUID(), false);
 		}
 	}
 

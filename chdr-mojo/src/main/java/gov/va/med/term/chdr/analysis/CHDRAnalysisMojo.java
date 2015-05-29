@@ -6,6 +6,7 @@ import gov.va.med.term.chdr.chdrReader.Concept;
 import gov.va.med.term.chdr.chdrReader.ConceptType;
 import gov.va.med.term.chdr.chdrReader.VHATConcept;
 import gov.va.oia.terminology.converters.sharedUtils.ConsoleUtil;
+
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.codec.language.DoubleMetaphone;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.TokenStream;
@@ -50,54 +52,47 @@ import org.apache.lucene.util.Version;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.ihtsdo.etypes.EConcept;
 import org.ihtsdo.tk.dto.concept.component.description.TkDescription;
 import org.ihtsdo.tk.dto.concept.component.identifier.TkIdentifier;
 import org.ihtsdo.tk.dto.concept.component.refex.TkRefexAbstractMember;
 import org.ihtsdo.tk.dto.concept.component.refex.type_string.TkRefsetStrMember;
+
 import au.com.bytecode.opencsv.CSVWriter;
 
 /**
  * Goal which converts CHDR data into the workbench jbin format
- * 
- * @goal analyze-CHDR-data
- * 
- * @phase process-sources
  */
+@Mojo( name = "analyze-CHDR-data", defaultPhase = LifecyclePhase.PROCESS_SOURCES )
 public class CHDRAnalysisMojo extends AbstractMojo
 {
 	private final String luceneField = "d";
 
 	/**
 	 * Where to put the output file.
-	 * 
-	 * @parameter expression="${project.build.directory}"
-	 * @required
 	 */
+	@Parameter( required = true, defaultValue = "${project.build.directory}" )
 	private File outputDirectory;
 
 	/**
 	 * Location of CHDR source data files. Expected to be a directory.
-	 * 
-	 * @parameter
-	 * @required
 	 */
-	private File inputFile;
+	@Parameter (required = true)
+	private File inputFileLocation;
 
 	/**
 	 * Location of vhat jbin data file. Expected to be a directory.
-	 * 
-	 * @parameter
-	 * @required
 	 */
+	@Parameter (required = true)
 	private File vhatInputFile;
 
 	/**
 	 * Locations of external terminology input files. Each is expected to be a directory.
-	 * 
-	 * @parameter
-	 * @required
 	 */
+	@Parameter (required = true)
 	private File[] externalInputFiles;
 
 	private HashMap<String, DescriptionInfo> vhatDescriptions_ = new HashMap<>();
@@ -130,7 +125,7 @@ public class CHDRAnalysisMojo extends AbstractMojo
 
 			ConsoleUtil.println("Reading CHDR data");
 
-			cdh_ = new CHDRDataHolder(inputFile);
+			cdh_ = new CHDRDataHolder(inputFileLocation);
 
 			ConsoleUtil.println("Reading VHAT concepts file");
 
@@ -1021,7 +1016,7 @@ public class CHDRAnalysisMojo extends AbstractMojo
 	{
 		CHDRAnalysisMojo i = new CHDRAnalysisMojo();
 		i.outputDirectory = new File("../chdr-econcept/target");
-		i.inputFile = new File("../chdr-econcept/target/generated-resources/data");
+		i.inputFileLocation = new File("../chdr-econcept/target/generated-resources/data");
 		i.vhatInputFile = new File("../chdr-econcept/target/generated-resources/data/VHAT");
 		i.externalInputFiles = new File[] { new File("../chdr-econcept/target/generated-resources/data/NDF-RT"),
 				new File("../chdr-econcept/target/generated-resources/data/RxNorm"), new File("../chdr-econcept/target/generated-resources/data/SCT") };

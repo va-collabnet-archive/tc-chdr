@@ -11,9 +11,11 @@ import gov.va.med.term.chdr.propertyTypes.PT_IDs;
 import gov.va.med.term.chdr.propertyTypes.PT_Refsets;
 import gov.va.med.term.chdr.propertyTypes.PT_Relations;
 import gov.va.oia.terminology.converters.sharedUtils.ConsoleUtil;
+import gov.va.oia.terminology.converters.sharedUtils.ConverterBaseMojo;
 import gov.va.oia.terminology.converters.sharedUtils.EConceptUtility;
 import gov.va.oia.terminology.converters.sharedUtils.EConceptUtility.DescriptionType;
 import gov.va.oia.terminology.converters.sharedUtils.stats.ConverterUUID;
+
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
@@ -31,8 +33,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.UUID;
-import org.apache.maven.plugin.AbstractMojo;
+
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.dwfa.cement.ArchitectonicAuxiliary;
 import org.dwfa.util.id.Type5UuidFactory;
 import org.ihtsdo.etypes.EConcept;
@@ -44,12 +49,9 @@ import org.ihtsdo.tk.dto.concept.component.relationship.TkRelationship;
 
 /**
  * Goal which converts CHDR data into the workbench jbin format
- * 
- * @goal convert-CHDR-data
- * 
- * @phase process-sources
  */
-public class CHDRImportMojo extends AbstractMojo
+@Mojo( name = "convert-CHDR-data", defaultPhase = LifecyclePhase.PROCESS_SOURCES )
+public class CHDRImportMojo extends ConverterBaseMojo
 {
 	private static final String chdrNamespaceBaseSeed = "gov.va.med.term.vhat.chdr";
 	private static final String vhatNamespaceBaseSeed = "gov.va.med.term.vhat";	
@@ -78,79 +80,35 @@ public class CHDRImportMojo extends AbstractMojo
 	private HashMap<String, UUID> chdrIDToUUID = new HashMap<>();
 
 	/**
-	 * Where to put the output file.
-	 * 
-	 * @parameter expression="${project.build.directory}"
-	 * @required
-	 */
-
-	private File outputDirectory;
-
-	/**
-	 * Location of source data file. Expected to be a directory.
-	 * 
-	 * @parameter
-	 * @required
-	 */
-	private File inputFile;
-
-	/**
 	 * Location of vhat jbin data file. Expected to be a directory.
-	 * 
-	 * @parameter
-	 * @required
 	 */
+	@Parameter (required = true)
 	private File vhatInputFile;
 	
 	/**
 	 * Location of sct jbin data file. Expected to be a directory.
-	 * 
-	 * @parameter
-	 * @required
 	 */
+	@Parameter (required = true)
 	private File sctInputFile;
 	
 	/**
 	 * Location of RxNorm jbin data file. Expected to be a directory.
-	 * 
-	 * @parameter
-	 * @required
 	 */
+	@Parameter (required = true)
 	private File rxnInputFile;
 	
 //	/**
 //	 * Location of UMLS jbin data file. Expected to be a directory.
-//	 * 
-//	 * @parameter
-//	 * @required
 //	 */
+//	@Parameter (required = true)
 //	private File umlsInputFile;
 	
 	/**
 	 * Location of NDF-RT jbin data file. Expected to be a directory.
-	 * 
-	 * @parameter
-	 * @required
 	 */
+	@Parameter (required = true)
 	private File ndfRtInputFile;
 
-
-	/**
-	 * Loader version number Use parent because project.version pulls in the version of the data file, which I don't want.
-	 * 
-	 * @parameter expression="${project.parent.version}"
-	 * @required
-	 */
-	private String loaderVersion;
-
-	/**
-	 * Content version number
-	 * 
-	 * @parameter expression="${project.version}"
-	 * @required
-	 */
-	private String releaseVersion;
-	
 	@Override
 	public void execute() throws MojoExecutionException
 	{
@@ -173,7 +131,7 @@ public class CHDRImportMojo extends AbstractMojo
 			//This is how the UUID for the VHAT ID type is created.
 			vhatIDUUIDAuthority = ConverterUUID.createNamespaceUUIDFromString(vhatNamespaceUUID, ids.getPropertyTypeDescription() + ":VUID");
 
-			CHDRDataHolder cdh = new CHDRDataHolder(inputFile);
+			CHDRDataHolder cdh = new CHDRDataHolder(inputFileLocation);
 
 			ConsoleUtil.println("Reading VHAT concepts file");
 
@@ -440,7 +398,7 @@ public class CHDRImportMojo extends AbstractMojo
 
 			EConcept chdr = refsets.getRefsetIdentityParent();  //"CHDR Refsets" concept
 			eConceptUtil_.addStringAnnotation(chdr, cdh.getVersion(), ContentVersion.VERSION.getProperty().getUUID(), false);
-			eConceptUtil_.addStringAnnotation(chdr, releaseVersion, contentVersion.RELEASE.getUUID(), false);
+			eConceptUtil_.addStringAnnotation(chdr, converterResultVersion, contentVersion.RELEASE.getUUID(), false);
 			eConceptUtil_.addStringAnnotation(chdr, loaderVersion, contentVersion.LOADER_VERSION.getUUID(), false);
 			eConceptUtil_.addDescription(chdr, "Clinical Health Data Repository", DescriptionType.SYNONYM, true, null, null, false);
 			// Also hang it under vhat root
@@ -929,7 +887,7 @@ public class CHDRImportMojo extends AbstractMojo
 		CHDRImportMojo i = new CHDRImportMojo();
 		i.outputDirectory = new File("../chdr-econcept/target");
 		// i.inputFile = new File("../chdr-econcept/CHDR Data/");
-		i.inputFile = new File("../chdr-econcept/target/generated-resources/data");
+		i.inputFileLocation = new File("../chdr-econcept/target/generated-resources/data");
 		i.vhatInputFile = new File("../chdr-econcept/target/generated-resources/data/VHAT");
 		i.execute();
 	}

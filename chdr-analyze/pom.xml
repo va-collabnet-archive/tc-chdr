@@ -6,7 +6,7 @@
 	<groupId>gov.va.oia.terminology.converters</groupId>
 	<artifactId>chdr-analyze</artifactId>
 	<!-- this should be set to ${sourceData.version}-loader-${loader.version} but that doesn't appease the maven gods that know best.... -->
-	<version>release_78-loader-2.0-SNAPHOST</version>
+	<version>release_78-loader-3.1-SNAPSHOT</version>
 	
 	<packaging>pom</packaging>
 	<name>chdr-analyze</name>
@@ -18,7 +18,7 @@
 		<snomed.version>2014.01.31-build-8</snomed.version>
 		<rxnorm.version>2014.09.02-loader-1.3.2</rxnorm.version>
 		<ndfRt.version>2014.09.02.14AA-loader-2.6.1</ndfRt.version>
-		<loader.version>2.0-SNAPHOST</loader.version>
+		<loader.version>3.1-SNAPSHOT</loader.version>
 	</properties>
 
 	<build>

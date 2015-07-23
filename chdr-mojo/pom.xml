@@ -5,14 +5,14 @@
 
 	<groupId>gov.va.oia.terminology.converters</groupId>
 	<artifactId>chdr-mojo</artifactId>
-	<version>2.0-SNAPHOST</version>
+	<version>2.0-SNAPSHOT</version>
 	
 	<packaging>maven-plugin</packaging>
 	<name>chdr-mojo</name>
 	
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<convertersCommonCode.version>3.0-SNAPSHOT</convertersCommonCode.version>
+		<convertersCommonCode.version>3.1-SNAPSHOT</convertersCommonCode.version>
 	</properties>
 	
 	<scm>
